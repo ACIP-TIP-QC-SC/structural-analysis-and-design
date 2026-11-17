@@ -1,0 +1,35 @@
+/* Color, type and spacing variables. Light is the default even on dark devices. */
+@font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:400;font-display:swap;src:url('../vendor/fonts/ibm-plex-sans-latin-400-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:500;font-display:swap;src:url('../vendor/fonts/ibm-plex-sans-latin-500-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:600;font-display:swap;src:url('../vendor/fonts/ibm-plex-sans-latin-600-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:400;font-display:swap;src:url('../vendor/fonts/ibm-plex-sans-greek-400-normal.woff2') format('woff2');unicode-range:U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF}
+@font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:500;font-display:swap;src:url('../vendor/fonts/ibm-plex-sans-greek-500-normal.woff2') format('woff2');unicode-range:U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF}
+@font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:600;font-display:swap;src:url('../vendor/fonts/ibm-plex-sans-greek-600-normal.woff2') format('woff2');unicode-range:U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF}
+@font-face{font-family:'IBM Plex Mono';font-style:normal;font-weight:400;font-display:swap;src:url('../vendor/fonts/ibm-plex-mono-latin-400-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'IBM Plex Mono';font-style:normal;font-weight:500;font-display:swap;src:url('../vendor/fonts/ibm-plex-mono-latin-500-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+
+:root{
+  --bg:#F3F5F7;--panel:#FFFFFF;--ink:#16202B;--muted:#52606D;--rule:#D5DBE1;
+  --accent:#1F5FA8;--accent-ink:#FFFFFF;--tint:#E8F0FA;
+  --ok:#0B6B53;--ok-bg:#E3F4EE;--warn:#8A5A00;--warn-bg:#FBF0D9;--ng:#B3361B;--ng-bg:#FCE9E3;
+  --brand:#9A5B00;--brand-mark:#D4612A;--conc:#DDE3E9;--track:#E4E9EE;--bar:#16202B;--bar-ink:#C9D3DD;
+  --soil:#EFE6D6;--water:#CFE3F6;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace;
+  --r-panel:8px;--r-ctl:6px;--pad:16px;--gap:20px;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0F151C;--panel:#18212B;--ink:#E6EDF3;--muted:#9AA7B4;--rule:#2B3744;
+  --accent:#74ACEC;--accent-ink:#0F151C;--tint:#1D2C3D;
+  --ok:#4CC9A0;--ok-bg:#12352D;--warn:#E9B44C;--warn-bg:#3A2E12;--ng:#FF8A5C;--ng-bg:#3F2018;
+  --brand:#E9B44C;--brand-mark:#F08A50;--conc:#2A3541;--track:#2B3744;--bar:#0A0F14;--bar-ink:#9AA7B4;
+  --soil:#2E2A22;--water:#1B3048;
+  color-scheme:dark;
+}
+/* Drawings in the printed report always use the light palette. */
+.lightpal{
+  --bg:#F3F5F7;--panel:#FFFFFF;--ink:#16202B;--muted:#52606D;--rule:#D5DBE1;
+  --accent:#1F5FA8;--accent-ink:#FFFFFF;--tint:#E8F0FA;
+  --ok:#0B6B53;--ok-bg:#E3F4EE;--warn:#8A5A00;--warn-bg:#FBF0D9;--ng:#B3361B;--ng-bg:#FCE9E3;
+  --brand:#9A5B00;--brand-mark:#D4612A;--conc:#DDE3E9;--track:#E4E9EE;--soil:#EFE6D6;--water:#CFE3F6;
+}

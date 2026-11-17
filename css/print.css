@@ -1,0 +1,48 @@
+/* A4 report. The report is built by js/core/report.js into #report. */
+@page{size:A4;margin:14mm 14mm 16mm;
+  @bottom-left{content:"ACIP T.I.P. QC SC · Structural Analysis and Design Calculator | For study and preliminary design. Verify against the governing code.";font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:6.6pt;color:#52606D}
+  @bottom-right{content:"Page " counter(page) " of " counter(pages);font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:6.6pt;color:#52606D}
+}
+@media print{
+  html,body{background:#fff!important}
+  .app{display:none!important}
+  #report{display:block!important}
+}
+.rp{font-family:'IBM Plex Sans',system-ui,sans-serif;color:#16202B;font-size:9pt;line-height:1.45;background:#fff}
+.rp .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.rp-wm{position:fixed;left:0;right:0;top:45%;text-align:center;font-size:58pt;font-weight:600;color:#1F5FA8;opacity:.07;transform:rotate(-32deg);white-space:nowrap;pointer-events:none;z-index:0}
+.rp-head{display:flex;gap:12px;align-items:center;border-bottom:2px solid #16202B;padding-bottom:10px;margin-bottom:12px}
+.rp-head img{height:60px;width:auto;flex:0 0 auto}
+.rp-head .t{font-size:14pt;font-weight:600;line-height:1.2}
+.rp-head .s{color:#52606D}
+.rp-head .by{color:#9A5B00;font-weight:500}
+.rp-head .meta{margin-left:auto;text-align:right;font-size:8pt;color:#52606D;font-family:'IBM Plex Mono',ui-monospace,monospace}
+.rp-title{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:12px}
+.rp-title .g{color:#52606D}
+.rp-title .n{font-size:15pt;font-weight:600}
+.rp-v{border:1.5px solid #0B6B53;background:#E3F4EE;border-radius:6px;padding:8px 14px;text-align:right}
+.rp-v .w{font-size:11pt;font-weight:600;color:#0B6B53}
+.rp-v.fail{border-color:#B3361B;background:#FCE9E3}
+.rp-v.fail .w{color:#B3361B}
+.rp-v.info{border-color:#1F5FA8;background:#E8F0FA}
+.rp-v.info .w{color:#1F5FA8}
+.rp-two{display:flex;gap:24px;margin-bottom:12px}
+.rp-two>div{flex:1;min-width:0}
+.rp h2{margin:0 0 6px;font-size:8pt;letter-spacing:.08em;text-transform:uppercase;color:#52606D;font-weight:600}
+.rp table{width:100%;border-collapse:collapse;margin-bottom:12px}
+.rp th{text-align:left;font-size:7.5pt;letter-spacing:.06em;text-transform:uppercase;color:#52606D;font-weight:600;padding:4px 6px;border-bottom:1px solid #16202B}
+.rp td{padding:4px 6px;border-bottom:1px solid #D5DBE1;vertical-align:top}
+.rp tr{break-inside:avoid}
+.rp h2{break-after:avoid}
+.rp table.keep{break-inside:avoid}
+.rp .ok{color:#0B6B53;font-weight:600}
+.rp .near{color:#8A5A00;font-weight:600}
+.rp .ng{color:#B3361B;font-weight:600}
+.rp .st{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid #D5DBE1;break-inside:avoid}
+.rp .st>b{flex:0 0 20px;color:#1F5FA8}
+.rp .st .tt{font-weight:600}
+.rp .st .nt{font-style:italic;color:#52606D}
+.rp .cl{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:7pt;color:#52606D}
+.rp .msg{margin:0 0 4px}
+.rp svg{width:100%;height:auto;display:block;max-height:75mm}
+.rp .rp-msgs{margin-bottom:10px}

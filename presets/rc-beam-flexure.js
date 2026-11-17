@@ -1,0 +1,46 @@
+// Presets for rc/beam-flexure. Stored in SI. Entries with `test` are the hand-off test cases.
+export const meta = { module: 'rc/beam-flexure', calc: 'js/modules/rc/beam-flexure.calc.js' };
+
+const base = { task: 'analyze', b: 300, h: 500, d: 440, fc: 28, fy: 420, n: 3, db: 25, Mu: 180, Ms: 90, exactN: false };
+const dbl = Object.assign({}, base, { dp: 60, np: 2, dbp: 20 });
+const tee = { task: 'analyze', bw: 300, h: 560, d: 500, hf: 100, bfFrom: 'typed', bf: 1200, flangeType: 'T', sw: 2700, ln: 6000, fc: 21, fy: 420, n: 6, db: 28, Mu: 600, Ms: 300, exactN: false };
+const P = (o) => Object.assign({}, base, o), D = (o) => Object.assign({}, dbl, o), T = (o) => Object.assign({}, tee, o);
+
+export default [
+  { id: 'ex1', test: 'RC-F1', name: 'Example: 300 × 500 beam, 3-25 mm bars', mode: 'singly', method: 'USD', inputs: P({}),
+    expect: { As: 1472.6, a: 86.625, c: 101.91, et: 0.0099524, phi: 0.90, Mn: 245.35, phiMn: 220.82, dcFlex: 0.81516, AsMin: 440.0, dcMin: 0.29879, dcDuct: 0.40191, yields: true },
+    status: { 'Flexural strength': 'OK', 'Minimum steel': 'OK', 'Ductility, εt ≥ 0.004': 'OK' }, pass: true, governing: 'Flexural strength', equilibrium: true },
+  { id: 'ng1', test: 'RC-F2', name: 'Test: over-reinforced beam (fails on purpose)', mode: 'singly', method: 'USD', inputs: P({ b: 250, h: 450, d: 390, fc: 21, n: 5, db: 28, Mu: 200, Ms: 110 }),
+    expect: { As: 3078.8, yields: false, c: 255.72, a: 217.36, et: 0.0015753, fs: 315.06, phi: 0.65, Mn: 272.87, phiMn: 177.37, dcFlex: 1.1276, dcDuct: 2.5392 },
+    status: { 'Flexural strength': 'NG', 'Ductility, εt ≥ 0.004': 'NG' }, pass: false, equilibrium: true },
+  { id: 'min1', test: 'RC-F3', name: 'Test: below minimum steel (fails on purpose)', mode: 'singly', method: 'USD', inputs: P({ h: 600, d: 540, n: 2, db: 12, Mu: 40, Ms: 30 }),
+    expect: { As: 226.19, a: 13.306, et: 0.10049, phiMn: 45.602, dcFlex: 0.87715, AsMin: 540.0, dcMin: 2.3873 },
+    status: { 'Flexural strength': 'OK', 'Minimum steel': 'NG' }, pass: false, equilibrium: true },
+  { id: 'des1', test: 'RC-F4', name: 'Test: design for Mu = 250 kN·m', mode: 'singly', method: 'USD', inputs: P({ task: 'design', Mu: 250 }),
+    expect: { Rn: 4.7827, rho: 0.012843, AsReq: 1695.2, a: 99.719, c: 117.32, et: 0.0082516, phi: 0.90, AsMin: 440 }, ok: true },
+  { id: 'des3', test: 'RC-F4b', name: 'Test: section too small for singly reinforced design (stops on purpose)', mode: 'singly', method: 'USD', inputs: P({ task: 'design', Mu: 600 }), ok: false, errorIncludes: 'too small for this moment as a singly reinforced beam' },
+  { id: 'des2', name: 'Example: design a 250 × 450 beam for 120 kN·m', mode: 'singly', method: 'USD', inputs: P({ task: 'design', b: 250, h: 450, d: 385, fc: 21, Mu: 120 }) },
+  { id: 'w1', test: 'RC-W1', name: 'Test: WSD, 300 × 500 beam, M = 90 kN·m', mode: 'singly', method: 'WSD', inputs: P({}),
+    expect: { Ec: 24870, n: 8, kd: 150.73, Icr: 1.3282e9, fc: 10.213, fcAllow: 12.6, fs: 156.8, fsAllow: 170, dcConc: 0.81057, dcSteel: 0.92238, Mallow: 97.574 },
+    status: { 'Concrete stress': 'OK', 'Steel stress': 'NEAR' }, pass: true },
+  { id: 'w2', test: 'RC-W2', name: 'Test: WSD, overstressed beam (fails on purpose)', mode: 'singly', method: 'WSD', inputs: P({ b: 250, h: 450, d: 390, fc: 21, fy: 280, n: 4, db: 20, Ms: 60, Mu: 100 }),
+    expect: { n: 9, kd: 147.98, Icr: 9.3249e8, fc: 9.5215, fcAllow: 9.45, fs: 140.15, fsAllow: 140, dcConc: 1.0076, dcSteel: 1.0011, Mallow: 59.55 },
+    status: { 'Concrete stress': 'NG', 'Steel stress': 'NG' }, pass: false },
+
+  { id: 'd1', test: 'RC-F5', name: 'Test: doubly reinforced, compression steel does not yield', mode: 'doubly', method: 'USD', inputs: D({ n: 6, db: 25, np: 2, dbp: 20, Mu: 350, Ms: 170 }),
+    expect: { As: 2945.2, Asp: 628.32, compYields: false, c: 166.55, a: 141.57, esp: 0.0019192, fsp: 383.85, et: 0.0049257, phi: 0.89359, Cc: 1010.8, Cs: 226.22, Mn: 459.16, phiMn: 410.30, dcFlex: 0.85303 },
+    status: { 'Flexural strength': 'OK' }, pass: true, equilibrium: true },
+  { id: 'd2', test: 'RC-F6', name: 'Test: doubly reinforced, 300 × 560 beam', mode: 'doubly', method: 'USD', inputs: D({ h: 560, d: 500, fc: 21, n: 4, db: 28, np: 2, dbp: 25, Mu: 300, Ms: 150 }),
+    expect: { c: 152.59, a: 129.70, fsp: 364.08, et: 0.0068302, phi: 0.90, Mn: 451.79, phiMn: 406.62, dcFlex: 0.7378 }, pass: true, equilibrium: true },
+  { id: 'd3', name: 'Example: design compression steel for Mu = 420 kN·m', mode: 'doubly', method: 'USD', inputs: D({ task: 'design', Mu: 420, db: 28, dbp: 20 }) },
+  { id: 'd4', name: 'Example: WSD check of a doubly reinforced beam', mode: 'doubly', method: 'WSD', inputs: D({ n: 4, db: 25, Ms: 120 }) },
+
+  { id: 't1', test: 'RC-F7', name: 'Test: T beam, stress block inside the flange', mode: 'flanged', method: 'USD', inputs: T({}),
+    expect: { aRect: 72.441, flanged: false, c: 85.225, et: 0.0146, phi: 0.90, Mn: 719.64, phiMn: 647.68, dcFlex: 0.92638, AsMin: 500.0 },
+    status: { 'Flexural strength': 'NEAR' }, pass: true, equilibrium: true },
+  { id: 't2', test: 'RC-F8', name: 'Test: T beam, over-reinforced web (fails on purpose)', mode: 'flanged', method: 'USD', inputs: T({ bf: 600, n: 8, Mu: 700, Ms: 350 }),
+    expect: { As: 4926.0, flanged: true, a0: 286.35, c0: 336.89, et0: 0.0014525, yields: false, c: 303.34, a: 257.84, et: 0.001945, fs: 389.00, Ctotal: 1916.2, phi: 0.65, Mn: 753.33, phiMn: 489.67, dcFlex: 1.430 },
+    status: { 'Flexural strength': 'NG', 'Ductility, εt ≥ 0.004': 'NG' }, pass: false, equilibrium: true },
+  { id: 't3', name: 'Example: T beam with the flange width from Table 406.3.2.1', mode: 'flanged', method: 'USD', inputs: T({ bfFrom: 'table', hf: 120, sw: 2700, ln: 6000, n: 4, db: 25, fc: 28, Mu: 350 }) },
+  { id: 't4', name: 'Example: design a T beam for Mu = 500 kN·m', mode: 'flanged', method: 'USD', inputs: T({ task: 'design', bf: 900, Mu: 500 }) }
+];

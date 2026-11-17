@@ -1,0 +1,74 @@
+{
+ "module": "shared/load-combos",
+ "calc": "js/modules/shared/load-combos.calc.js",
+ "cases": [
+  {
+   "id": "SH-C1",
+   "name": "Test: strength combinations, D 100, L 60, Lr 20, W 40, E 50",
+   "method": null,
+   "input": {
+    "mode": "strength",
+    "quantity": "force",
+    "D": 100,
+    "L": 60,
+    "Lr": 20,
+    "R": 0,
+    "W": 40,
+    "E": 50,
+    "H": 0,
+    "F": 0,
+    "T": 0,
+    "f1": 0.5
+   },
+   "expect": {
+    "rows.203-1": 140,
+    "rows.203-2a": 226,
+    "rows.203-3a": 182,
+    "rows.203-3b": 172,
+    "rows.203-4a": 200,
+    "rows.203-5": 200,
+    "rows.203-6": 130,
+    "rows.203-6(-W)": 50,
+    "rows.203-7": 140,
+    "rows.203-7(-E)": 40,
+    "max": 226,
+    "min": 40,
+    "maxId": "203-2a",
+    "minId": "203-7(-E)"
+   },
+   "pass": null
+  },
+  {
+   "id": "SH-C1b",
+   "name": "Test: allowable basic combinations, same loads",
+   "method": null,
+   "input": {
+    "mode": "basic",
+    "quantity": "force",
+    "D": 100,
+    "L": 60,
+    "Lr": 20,
+    "R": 0,
+    "W": 40,
+    "E": 50,
+    "H": 0,
+    "F": 0,
+    "T": 0,
+    "f1": 0.5
+   },
+   "expect": {
+    "rows.203-8": 100,
+    "rows.203-9": 160,
+    "rows.203-10a": 120,
+    "rows.203-11a": 160,
+    "rows.203-12a": 124,
+    "rows.203-12b": 135.71,
+    "rows.203-13a": 178,
+    "rows.203-13b": 186.79,
+    "rows.203-13a(-W)": 142,
+    "rows.203-13b(-E)": 133.21
+   },
+   "pass": null
+  }
+ ]
+}

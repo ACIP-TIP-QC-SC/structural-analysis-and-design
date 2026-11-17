@@ -1,0 +1,41 @@
+RC-F1: As=1472.6, a=86.625, c=101.91, et=0.0099524, fs=420, phi=0.9, Mn=245.35, phiMn=220.82, DC_flex=0.81516, Asmin=440, DC_min=0.29879, DC_duct=0.40191
+RC-F2: As=3078.8, a=217.36, c=255.72, et=0.0015753, fs=315.06, phi=0.65, Mn=272.87, phiMn=177.37, DC_flex=1.1276, Asmin=325, DC_min=0.10556, DC_duct=2.5392
+RC-F3: As=226.19, a=13.306, c=15.654, et=0.10049, fs=420, phi=0.9, Mn=50.669, phiMn=45.602, DC_flex=0.87715, Asmin=540, DC_min=2.3873, DC_duct=0.039805
+RC-F4: Rn=4.7827, rho=0.012843, As_req=1695.2, a=99.719, c=117.32, et=0.0082516, Asmin=440, rho_at_et004=0.020643, rho_at_et005=0.018062
+RC-F5: As=2945.2, Asp=628.32, c=166.55, a=141.57, eps_s_prime=0.0019192, fs_prime=383.85, et=0.0049257, phi=0.89359, Cc_kN=1010.8, Cs_kN=226.22, Mn=459.16, phiMn=410.3, DC=0.85303
+RC-F6: As=2463, Asp=981.75, c=152.59, a=129.7, eps_s_prime=0.0018204, fs_prime=364.08, et=0.0068302, phi=0.9, Cc_kN=694.56, Cs_kN=339.91, Mn=451.79, phiMn=406.62, DC=0.7378
+RC-F7: case=a<=hf (rectangular, width bf), As=3694.5, a=72.441, c=85.225, et=0.0146, phi=0.9, Mn=719.64, phiMn=647.68, DC=0.92638, Asmin=500
+RC-F8: case=a>hf (flange + web), As=4926, a=286.35, c=336.89, et=0.0014525, phi=0.65, Mn=788.14, phiMn=512.29, DC=1.3664, Asmin=500
+RC-W1: Ec=24870, n=8, kd=150.73, k=0.34257, j=0.88581, Icr=1.3282e+09, fc_actual=10.213, fc_allow=12.6, fs_actual=156.8, fs_allow=170, DC_conc=0.81057, DC_steel=0.92238, M_allow=97.574
+RC-W2: Ec=21538, n=9, kd=147.98, k=0.37943, j=0.87352, Icr=9.3249e+08, fc_actual=9.5215, fc_allow=9.45, fs_actual=140.15, fs_allow=140, DC_conc=1.0076, DC_steel=1.0011, M_allow=59.55
+RC-S1: Vc_kN=118.74, phiVc=89.056, half_phiVc=44.528, stirrups=designed, Av=157.08, Vs_req=121.26, Vs_limit=461, s_strength=159.59, s_max=220, s_Avmin=418.88, s_use=159.59
+RC-S2: Vc_kN=118.74, phiVc=89.056, half_phiVc=44.528, stirrups=minimum, Av=157.08, Vs_req=0, Vs_limit=461, s_strength=inf, s_max=220, s_Avmin=418.88, s_use=220
+RC-S3: Vc_kN=147.24, phiVc=110.43, half_phiVc=55.214, stirrups=designed, Av=157.08, Vs_req=412.76, Vs_limit=571.63, s_strength=86.31, s_max=135, s_Avmin=538.56, s_use=86.31
+RC-S4: Vc=118.74, Vs=129.01, phiVn=185.82
+RC-T1: Acp=210000, pcp=1900, Aoh=132600, ph=1540, Ao=1.1271e+05, phiTth=7.6455, phiTcr=30.398, sect_lhs=2.2084, sect_rhs=3.294, At_s=0.56332, Av_s=0.1322, AvplusTwoAt_s=1.2588, min_s_ratio=0.29167, s_req=124.78, s_max=192.5, Al=867.52, Al_min=243.7
+RC-SL1: hmin=120, Rn=1.3889, rho=0.00517, As_req=620.39, As_min=300, As_use=620.39, s_calc=182.3, s_max_main=450, s_temp_for10mm=261.8, s_max_temp=450, phiVc_kN_per_m=70.113
+RC-SL2: hmin=107.14, Rn=1, rho=0.0024332, As_req=243.32, As_min=225, As_use=243.32, s_calc=322.79, s_max_main=375, s_temp_for10mm=349.07, s_max_temp=450, phiVc_kN_per_m=67.467
+ST-T1: An=7073.8, U=0.9, Ae=6366.4, Pn_yield_kN=2128.1, Pn_rupt_kN=2546.6, LRFD_yield=1915.3, LRFD_rupt=1909.9, ASD_yield=1274.3, ASD_rupt=1273.3
+ST-T2: Agv=4560, Anv=3120, Ant=612, rupture_path=993.6, yield_path=923.33, Rn_kN=923.33, LRFD=692.5, ASD=461.66
+ST-C1: KLr_x=40.909, KLr_y=69.767, limit=113.4, Fe=405.53, Fcr=241.64, Pn_kN=2244.9, LRFD=2020.4, ASD=1344.2, flange_lim=13.483, bf2tf=8.93, web_lim=35.875, htw=23.1
+ST-C2: KLr_x=81.818, KLr_y=139.53, limit=113.4, Fe=101.38, Fcr=88.913, Pn_kN=826, LRFD=743.4, ASD=494.61, flange_lim=13.483, bf2tf=8.93, web_lim=35.875, htw=23.1
+ST-C3: KLr_x=72.727, KLr_y=62.016, limit=133.76, Fe=373.19, Fcr=187.78, Pn_kN=1744.5, LRFD=1570.1, ASD=1044.6, flange_lim=15.903, bf2tf=8.93, web_lim=42.313, htw=23.1
+ST-B1: Mp_kNm=206.93, Lp=1474.7, Lr=4907.9, zone=yielding (Lb<=Lp), Mn_kNm=206.93, LRFD_M=186.24, ASD_M=123.91, flange_lp=9.1493, bf2tf=5.7, web_lp=90.53, htw=29.5, Vn_kN=420.04, LRFD_V=420.04, ASD_V=280.03
+ST-B2: Mp_kNm=206.93, Lp=1474.7, Lr=4907.9, zone=inelastic LTB, Mn_kNm=171.96, LRFD_M=154.76, ASD_M=102.97, flange_lp=9.1493, bf2tf=5.7, web_lp=90.53, htw=29.5, Vn_kN=420.04, LRFD_V=420.04, ASD_V=280.03
+ST-B3: Mp_kNm=206.93, Lp=1474.7, Lr=4907.9, zone=elastic LTB, Mn_kNm=82.352, LRFD_M=74.117, ASD_M=49.312, flange_lp=9.1493, bf2tf=5.7, web_lp=90.53, htw=29.5, Vn_kN=420.04, LRFD_V=420.04, ASD_V=280.03
+ST-B4: Mp_kNm=206.93, Lp=1474.7, Lr=4907.9, zone=inelastic LTB, Mn_kNm=196.03, LRFD_M=176.43, ASD_M=117.38, flange_lp=9.1493, bf2tf=5.7, web_lp=90.53, htw=29.5, Vn_kN=420.04, LRFD_V=420.04, ASD_V=280.03
+ST-B5: delta_mm=14.309, L_over_360=16.667
+FD-B1: Nc=37.16, Nq=22.46, Ngamma=19.13, q=18, qu=610.88, qall_gross=203.63, qall_net=197.63, Q_all_gross_kN=458.16
+FD-B2: Nc=25.13, Nq=12.72, Ngamma=8.34, q=17.5, qu=812.77, qall_gross=270.92, qall_net=265.09, Q_all_gross_kN=325.11
+FD-B3: Nc=5.7, Nq=1, Ngamma=0, q=27, qu=471.6, qall_gross=157.2, qall_net=148.2, Q_all_gross_kN=628.8
+FD-B4: Nc=30.14, Nq=18.401, Ngamma=22.402, Fcs=1.6105, Fqs=1.5774, Fgs=0.6, Fcd=1.2035, Fqd=1.1925, q=18, gamma_used=18, qu=804.46, qall=268.15
+FD-B5: Nc=25.803, Nq=14.72, Ngamma=16.717, Fcs=1.3803, Fqs=1.3545, Fgs=0.73333, Fcd=1.2408, Fqd=1.2245, q=25.5, gamma_used=17, qu=1493.9, qall=497.95
+FD-B6: Nc=30.14, Nq=18.401, Ngamma=22.402, Fcs=1.6105, Fqs=1.5774, Fgs=0.6, Fcd=1.2035, Fqd=1.1925, q=18, gamma_used=12.793, qu=751.97, qall=250.66
+FD-B7: Nc=30.14, Nq=18.401, Ngamma=22.402, Fcs=1.6105, Fqs=1.5774, Fgs=0.6, Fcd=1.2035, Fqd=1.1925, q=14.876, gamma_used=10.19, qu=617.6, qall=205.87
+FD-I1: q_net_allow=169.7, A_req=8.2499, B_calc=2.8723, B_use=2.9, Pu=1920, qu=228.3, d=455, Vu_oneway=526.34, phiVc_oneway=770.96, DC1=0.68272, bo=3420, Vu_punch=1753.1, vc_MPa=1.5122, phiVc_punch=1764.9, DC2=0.99331, Mu=517.24, Rn=0.95726, As_req=3092.7, As_min=2871, As_use=3092.7, bars=10
+FD-I2: q_net_allow=125.7, A_req=6.7621, B_calc=2.6004, B_use=2.7, Pu=1160, qu=159.12, d=359, Vu_oneway=350.58, phiVc_oneway=653.95, DC1=0.53609, bo=2836, Vu_punch=1080, vc_MPa=1.7462, phiVc_punch=1333.4, DC2=0.80998, Mu=296.58, Rn=0.94699, As_req=3346.2, As_min=2430, As_use=3346.2, bars=17
+FD-W1: q_net_allow=166.3, B_calc=1.804, B_use=1.9, wu=408, qu=214.74, d=267, Vu=114.45, phiVc=156, DC_shear=0.73367, Mu=68.716, As_req=702.6, As_min=630, s_for_bar=286.17
+SH-C1 strength: 203-1=140, 203-2=226, 203-3a=182, 203-3b=172, 203-4=200, 203-5=200, 203-6=130, 203-7=140
+SH-C1 allowable: 203-8=100, 203-9=160, 203-10=120, 203-11=160, 203-12a=124, 203-12b=135.71, 203-13a=178, 203-13b=186.79, 203-13a(-W)=142, 203-13b(-E)=133.21
+SH-L1: ratio_long_short=1.5, action=two-way, wu_kPa=9.6, tri_peak_on_short_beam=19.2, trap_peak_on_long_beam=19.2, equiv_udl_short_moment=12.8, equiv_udl_long_moment=16.356, area_tri=4, area_trap=8, total_on_short_beam=38.4, total_on_long_beam=76.8, check_sum=230.4, panel_total=230.4
+SH-L2: ratio=2.5, action=one-way, line_load_on_each_long_beam=14.4, column_tributary_example_kN=432

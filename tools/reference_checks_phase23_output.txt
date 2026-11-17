@@ -1,0 +1,56 @@
+TW-1a flat plate fy420: ext_no_edge=186.67, ext_edge=169.7, interior=169.7
+TW-1b beams afm1.2 beta1.25: h=145.8
+TW-1c beams afm2.5 beta1.25: h=130.37
+TW-2 static: qu=12, ln=5.5, Mo=226.88
+TW-2 interior span: neg=147.47, pos=79.406, cs_neg=110.6, cs_pos=47.644, ms_neg=36.867, ms_pos=31.762
+TW-2 end span no edge beam: ext_neg=58.988, pos=117.98, int_neg=158.81, cs_ext_neg=58.988, cs_pos=70.785, cs_int_neg=119.11
+TW-2 col strip interior negative steel: Mu=110.6, As=1909.1, As_min=900, s_max=400
+TW-3 punching: Vu_kN=354.77, bo=2640, vc=1.7462, phi_vc=1.3096, vu=0.8399, DC=0.64132, gamma_f=0.6, gamma_v=0.4, Jc=3.1117e+10, vu_max_with_M40=1.0096, DC_M=0.77088
+COL-1 tied 400x400 8-25: Ast=3927, rho_g=0.024544, Po_kN=5363.9, Pn_max_kN=4291.1, phiPn_max_kN=2789.2, WSD_allow_kN=1716.4
+COL-1b design Pu3000 rho0.02: Ag_req=1.8186e+05, side=426.45, Ast_at_450=2397.1
+COL-2 spiral D500 8-25: Ag=1.9635e+05, Ach=1.3854e+05, Po_kN=6229, phiPn_max_kN=3971, rho_s_min=0.012517, pitch_max=58.336, clear=48.336
+COL-2b ties for 25 bars 10 ties 400 col: s=400
+COL-3 balanced: c=198.53, Pn_kN=1554, Mn_kNm=349.22, et=0.0021, phi=0.65, phiPn=1010.1, phiMn=226.99
+COL-3 et=0.005: c=126.56, Pn_kN=476.04, Mn_kNm=291.46, et=0.005, phi=0.9, phiPn=428.44, phiMn=262.32
+COL-3 c=300: c=300, Pn_kN=3073.6, Mn_kNm=271.41, et=0.000375, phi=0.65, phiPn=1997.8, phiMn=176.42
+COL-3 pure bending: c=94.639, Mn_kNm=243.84, phi=0.9, phiMn=219.46
+COL-3 pure tension: Pn_kN=-1649.3, phiPn=-1484.4
+COL-3 at e=150 (Pu1500, Mu225): c=233.55, Pn_kN=2164.6, Mn_kNm=324.69, et=0.0013354, phi=0.65, phiPn_kN=1407, phiMn_kNm=211.05, DC=1.0661
+COL-5 slender, too slender (Pu 1500): delta=1.7778, Mc_kNm=213.33, exceeds_1p4=True
+COL-4 slender nonsway (Pu 1000): klu_r=50, limit=28, Ec=24870, EI=1.3264e+13, Pc_kN=3636.4, Cm=0.8, M2min_kNm=27, delta=1.2631, Mc_kNm=151.58, ratio_limit_1p4=True
+DEV-1 tension: d25_simplified=1167.2, d25_other=1803.9, d25_general_cb50=901.96, d16_top_simplified=786.17, d16_general_cb40_psis0p8=480.28
+DEV-2 hook 20mm: ldh=380.99, with_psic=266.69, min8db=160, min150=150
+DEV-3 compression 25mm: a=476.24, b=451.5
+DEV-4 laps: classB_25=1517.4, classA_25=1167.2, comp_25_fy420=745.5, comp_25_fy520=1090, comp_25_fc17=994
+SV-1 deflection: n=8.0418, kd=151.04, Icr=1.3334e+09, Ig=3.125e+09, fr=3.2807, Mcr_kNm=41.009, Ie_D=1.7352e+09, Ie_DL=1.4202e+09, dD=5.8657, dDL=11.944, dL=6.0787, L360=16.667, lam=2, long_term=15.379, after_attach=21.457, L240=25, L480=12.5
+SV-2 spacing: fs280_cc50=255, fs250_cc40=325.6, fs280_cc75=192.5
+BC-1 strengths: KL_r=62.016, Fe=513.25, Fcr=260.4, Pn_kN=2419.1, Lp=2733.2, Lr=9626.5, Mp_kNm=341.48, lam_f=8.9437, lam_pf=9.1493, Mn_ltb=318.43, Mn_flb=341.48, Mnx=318.43
+BC-1 LRFD: Pc_kN=2177.2, Mcx_kNm=286.59, Pr_over_Pc=0.36745, eq=a, interaction=0.73964
+BC-1 ASD: Pc_kN=1448.5, Mcx_kNm=190.68, Pr_over_Pc=0.36588, eq=a, interaction=0.73882
+BC-2 B1: Pe1_kN=13967, B1_Cm1_LRFD_Pr800=1.0608, B1_Cm0p4=1, B1_ASD_Pr530=1.0646
+BC-2 B2: SPe2_kN=85000, B2_LRFD=1.0759, B2_ASD_SP4000=1.0814, Mr=164.56
+BT-1 bolt shear M20 A325N: Ab=314.16, Rn_kN=116.87, LRFD=87.65, ASD=58.434
+BT-1 bearing: edge_kN=167.04, interior_kN=230.4, sum4_kN=794.88, phi_sum=596.16, shear4_kN=467.47, phi_shear4=350.6, ASD_gov=233.73
+BT-2 combined: frv=159.15, Fnt_mod=452.32, phiRn_kN=106.58, ASD_frv=105.04, ASD_Fnt_mod=455.86, ASD_Rn_over_omega=71.606
+BT-3 slip: Rn=56.161, serv_LRFD=56.161, serv_ASD=37.441, str_LRFD=47.737, str_ASD=31.91, ks_Tu30=0.81304, two_planes=112.32
+BT-4 eccentric: Sd2=37500, M=30000, direct=25, rx=60, ry=40, R=88.459
+WD-1 fillet 8mm E70 (480): per_mm_N=1628.9, Rn_300_kN=488.68, LRFD=366.51, ASD=244.34, base_rupture_per_mm=2400, base_yield_per_mm=1488, min_len=32, transverse_factor=1.5
+WD-2 group: Rwl=488.68, Rwt=325.79, a=814.46, b=904.06, Rn=904.06, LRFD=678.04
+WD-3 eccentric C weld: L=550, xbar=40.909, Ix=5.9896e+06, Iy=1.3295e+06, Ip=7.3191e+06, direct=0.21818, fx=0.51236, fy=0.44715, fr_kN_per_mm=0.83974, w_req_LRFD=5.4989, w_req_ASD_P80=5.4989
+CF-1 rectangular: x_res=3, L=6.4, B_req=1.9531, qu=265.62, w=531.25, V_A_left=106.25, V_A_right=-1253.8, x_zero=2.56, M_max=-1468.8, V_B_left=1402.5, V_B_right=-637.5, M_B=382.5, Vu_oneway=871.25, phiVc_oneway=1012, Vu_punch_B=1625, phiVc_punch_B=4911.2, Vu_punch_A=1123.3, phiVc_punch_A=2652, As_top=5349.3, As_min=3060, As_bot_B=1360.1
+CF-2 trapezoid: area=12.5, xbar=3.2, a_plus_b=4.386, a_at_A=1.385, b_at_B=3.0009
+CF-3 strap: e=0.8, R1=1153.8, R2=1346.2, A1=5.7692, B1=2.8846, A2=6.7308, side2=2.5944
+DW-1: phiBn_col_kN=2475.2, phiBn_ftg_kN=3712.8, excess_kN=24.8, As_excess=90.842, As_min=800, ldc_ftg_16=351.94, ldc_col_25=476.24, lap_16=477.12, avail=469
+RW-1: Ka=0.33333, Pa=75, Mo=125, V=225, Mr=403.38, FS_ot=3.227, FS_sl=1.65, xbar=1.2372, e=0.26276, kern=0.5, qmax=114.41, qmin=35.587, Mu_stem=145.8, Vu_stem_base=97.2, As_stem=1207.8, As_min_stem=720
+RW-2 coefficients phi30: Rankine_beta10=0.34952, Coulomb_delta20_beta10=0.34002, Kp=3
+SW-1: d=3200, Vc_kN=719.64, phiVc=539.73, Vn_max_kN=3513.6, Vs_req_kN=480.36, Av=226.19, s_strength=632.88, s_rho_min=361.91, s_max=450, rho_t_at_350=0.0025851, rho_l_min=0.0025744, phiVn_at_350=1191.2
+SW-2 simplified axial per m: Pn_kN=2646.9, phiPn=1720.5, h_min=120
+BP-1: Pp_kN=4284, phiPp=2784.6, ASD=1854.5, m=79.35, n=98.4, X=0.53868, lam=0.87416, lam_n=55.509, l=98.4, t_LRFD=28.52, t_ASD_Pa1000=28.548
+BP-2 anchor rod M24 Fu400: Ab=452.39, Rnt_kN=135.72, phi_t=101.79, Rnv_kN=81.43, phi_v=61.073
+MAT-1: Q=11000, ex=-0.24545, ey=0.068182, Ix=3413.3, Iy=1333.3, q_avg=68.75, qA_m5_p8=80.633, qB_p5_p8=60.383, qC_p5_m8=56.867, qD_m5_m8=77.117
+MAT-1 strip x=-4.5: width=2.75, q_av=76.091, soil_reaction=3348, column_sum=3800, average=3574, q_mod=81.227, F=0.94052
+PL-1 sand: Ap=0.12566, p=1.2566, q_Nq=36465, ql=5006.5, Qp=629.13, Lcrit=6, f_max=70.505, Qs=1063.2, Qu=1692.3, Qall=564.11
+PL-2 clay: Qp=67.858, Qs=934.94, Qu=1002.8, Qall=334.27
+PL-3 group: theta=18.435, eta=0.70982, eta_x_sumQu_sand=14415, block=22368, sumQu=12034, Qg_clay=12034
+PC-1: R_hi=900, R_lo=700, oneway_fraction=0, Vu_oneway=0, phiVc_oneway=742.13, twoway_fraction=0.6875, Vu_twoway=2200, bo=4200, phiVc_twoway=3025.3, Mu=630, As=3107.8, As_min=2520, pile_punch_bo=2984.5, phiVc_pile=2149.8
+PC-2 d450: oneway_fraction=0.25, Vu_oneway=450, phiVc_oneway=607.2, twoway_fraction=0.8125, Vu_twoway=2600, phiVc_twoway=2239.5

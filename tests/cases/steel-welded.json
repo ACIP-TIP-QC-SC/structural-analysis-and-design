@@ -1,0 +1,164 @@
+{
+ "module": "steel/welded",
+ "calc": "js/modules/steel/welded.calc.js",
+ "cases": [
+  {
+   "id": "WD-1",
+   "name": "Test: two 150 mm longitudinal 8 mm fillets, E70, 10 mm plate",
+   "method": "LRFD",
+   "input": {
+    "mode": "fillet",
+    "FEXX": 480,
+    "w": 8,
+    "nLong": 2,
+    "Llong": 150,
+    "Ltrans": 0,
+    "angle": 0,
+    "t": 10,
+    "Fy": 248,
+    "Fu": 400,
+    "P": 300,
+    "groove": "cjp",
+    "loading": "tension",
+    "Lw": 200,
+    "E": 6,
+    "layout": "C",
+    "a": 250,
+    "b": 150,
+    "segments": [
+     {
+      "x1": 0,
+      "y1": 0,
+      "x2": 0,
+      "y2": 200
+     },
+     {
+      "x1": 100,
+      "y1": 0,
+      "x2": 100,
+      "y2": 200
+     }
+    ],
+    "ex": 250,
+    "ey": 0
+   },
+   "expect": {
+    "rn": 1628.9,
+    "Rn": 488.68,
+    "LRFD": 366.51,
+    "ASD": 244.34,
+    "baseRupture": 2400,
+    "baseRuptureAvail": 1800,
+    "baseYield": 1488,
+    "baseYieldAvail": 1488,
+    "weldAvailPerMm": 1221.7,
+    "minLength": 32
+   },
+   "pass": true
+  },
+  {
+   "id": "WD-2",
+   "name": "Test: the same with a 200 mm transverse weld",
+   "method": "LRFD",
+   "input": {
+    "mode": "fillet",
+    "FEXX": 480,
+    "w": 8,
+    "nLong": 2,
+    "Llong": 150,
+    "Ltrans": 200,
+    "angle": 0,
+    "t": 10,
+    "Fy": 248,
+    "Fu": 400,
+    "P": 600,
+    "groove": "cjp",
+    "loading": "tension",
+    "Lw": 200,
+    "E": 6,
+    "layout": "C",
+    "a": 250,
+    "b": 150,
+    "segments": [
+     {
+      "x1": 0,
+      "y1": 0,
+      "x2": 0,
+      "y2": 200
+     },
+     {
+      "x1": 100,
+      "y1": 0,
+      "x2": 100,
+      "y2": 200
+     }
+    ],
+    "ex": 250,
+    "ey": 0
+   },
+   "expect": {
+    "Rwl": 488.68,
+    "Rwt": 325.79,
+    "Ra_": 814.46,
+    "Rb_": 904.06,
+    "Rn": 904.06,
+    "LRFD": 678.04
+   },
+   "pass": true
+  },
+  {
+   "id": "WD-3",
+   "name": "Test: C-shaped group, 120 kN at 250 mm (LRFD)",
+   "method": "LRFD",
+   "input": {
+    "mode": "eccentric",
+    "FEXX": 480,
+    "w": 6,
+    "nLong": 2,
+    "Llong": 150,
+    "Ltrans": 0,
+    "angle": 0,
+    "t": 10,
+    "Fy": 248,
+    "Fu": 400,
+    "P": 120,
+    "groove": "cjp",
+    "loading": "tension",
+    "Lw": 200,
+    "E": 6,
+    "layout": "C",
+    "a": 250,
+    "b": 150,
+    "segments": [
+     {
+      "x1": 0,
+      "y1": 0,
+      "x2": 0,
+      "y2": 200
+     },
+     {
+      "x1": 100,
+      "y1": 0,
+      "x2": 100,
+      "y2": 200
+     }
+    ],
+    "ex": 250,
+    "ey": 0
+   },
+   "expect": {
+    "L": 550,
+    "xbar": 40.909,
+    "Ix": 5989600,
+    "Iy": 1329500,
+    "Ip": 7319100,
+    "direct": 0.21818,
+    "fx": 0.51236,
+    "fy": 0.44715,
+    "fr": 0.83974,
+    "wReq": 5.4989
+   },
+   "pass": true
+  }
+ ]
+}

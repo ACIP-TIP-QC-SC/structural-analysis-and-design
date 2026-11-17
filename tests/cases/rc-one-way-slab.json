@@ -1,0 +1,82 @@
+{
+ "module": "rc/one-way-slab",
+ "calc": "js/modules/rc/one-way-slab.calc.js",
+ "cases": [
+  {
+   "id": "RC-SL1",
+   "name": "Test: 150 mm slab, one end continuous, Mu = 18 kN·m/m",
+   "method": "USD",
+   "input": {
+    "mode": "strip",
+    "span": 3600,
+    "support": "oneEnd",
+    "h": 150,
+    "dFrom": "typed",
+    "cover": 20,
+    "d": 120,
+    "dbm": 12,
+    "dbt": 10,
+    "fc": 21,
+    "fy": 280,
+    "muFrom": "typed",
+    "Mu": 18,
+    "wD": 4.8,
+    "wL": 2.4,
+    "Vu": null
+   },
+   "expect": {
+    "hmin": 120,
+    "Rn": 1.3889,
+    "rho": 0.00517,
+    "AsReq": 620.39,
+    "AsMin": 300,
+    "sCalc": 182.3,
+    "sPractical": 175,
+    "sMaxMain": 450,
+    "AsTemp": 300,
+    "sTemp": 261.8,
+    "sTempPractical": 250,
+    "sMaxTemp": 450,
+    "phiVc": 70.113
+   },
+   "pass": true,
+   "equilibrium": true
+  },
+  {
+   "id": "RC-SL2",
+   "name": "Test: 125 mm slab, both ends continuous, Mu = 9 kN·m/m",
+   "method": "USD",
+   "input": {
+    "mode": "strip",
+    "span": 3000,
+    "support": "bothEnds",
+    "h": 125,
+    "dFrom": "typed",
+    "cover": 20,
+    "d": 100,
+    "dbm": 10,
+    "dbt": 10,
+    "fc": 28,
+    "fy": 420,
+    "muFrom": "typed",
+    "Mu": 9,
+    "wD": 4.8,
+    "wL": 2.4,
+    "Vu": null
+   },
+   "expect": {
+    "hmin": 107.14,
+    "Rn": 1,
+    "rho": 0.0024332,
+    "AsReq": 243.32,
+    "AsMin": 225,
+    "sCalc": 322.79,
+    "sPractical": 300,
+    "sMaxMain": 375,
+    "sTemp": 349.07
+   },
+   "pass": true,
+   "equilibrium": true
+  }
+ ]
+}

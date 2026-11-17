@@ -1,0 +1,231 @@
+{
+ "module": "rc/two-way-slab",
+ "calc": "js/modules/rc/two-way-slab.calc.js",
+ "cases": [
+  {
+   "id": "TW-1",
+   "name": "Test: flat plate thickness, fy 420, ℓn 5.6 m",
+   "method": "USD",
+   "input": {
+    "mode": "thickness",
+    "system": "flat",
+    "fy": 420,
+    "ln": 5600,
+    "panel": "extNoEdge",
+    "drop": false,
+    "afm": 1.2,
+    "beta": 1.25,
+    "h": null
+   },
+   "expect": {
+    "extNoEdge": 186.67,
+    "extEdge": 169.7,
+    "interior": 169.7,
+    "hmin": 186.67,
+    "hUse": 190
+   },
+   "pass": null
+  },
+  {
+   "id": "TW-1i",
+   "name": "Test: same slab, interior panel",
+   "method": "USD",
+   "input": {
+    "mode": "thickness",
+    "system": "flat",
+    "fy": 420,
+    "ln": 5600,
+    "panel": "interior",
+    "drop": false,
+    "afm": 1.2,
+    "beta": 1.25,
+    "h": 180
+   },
+   "expect": {
+    "hmin": 169.7,
+    "hUse": 170
+   },
+   "pass": true
+  },
+  {
+   "id": "TW-1b",
+   "name": "Test: beams on all sides, αfm 1.2, β 1.25",
+   "method": "USD",
+   "input": {
+    "mode": "thickness",
+    "system": "beams",
+    "fy": 420,
+    "ln": 5600,
+    "panel": "extNoEdge",
+    "drop": false,
+    "afm": 1.2,
+    "beta": 1.25,
+    "h": null
+   },
+   "expect": {
+    "hmin": 145.8
+   },
+   "pass": null
+  },
+  {
+   "id": "TW-1c",
+   "name": "Test: beams on all sides, αfm 2.5, β 1.25",
+   "method": "USD",
+   "input": {
+    "mode": "thickness",
+    "system": "beams",
+    "fy": 420,
+    "ln": 5600,
+    "panel": "extNoEdge",
+    "drop": false,
+    "afm": 2.5,
+    "beta": 1.25,
+    "h": null
+   },
+   "expect": {
+    "hmin": 130.37
+   },
+   "pass": null
+  },
+  {
+   "id": "TW-2",
+   "name": "Test: flat plate 6 × 5 m, interior span",
+   "method": "USD",
+   "input": {
+    "mode": "moments",
+    "l1": 6,
+    "l2": 5,
+    "c1": 500,
+    "c2": 500,
+    "h": 200,
+    "d": 160,
+    "fc": 28,
+    "fy": 420,
+    "db": 12,
+    "wD": 6,
+    "wL": 3,
+    "addSelf": false,
+    "span": "interior",
+    "edge": "noEdgeBeam",
+    "af1": 0,
+    "bt": 0,
+    "threeSpans": true,
+    "spansSimilar": true
+   },
+   "expect": {
+    "qu": 12,
+    "ln": 5.5,
+    "Mo": 226.88,
+    "M.neg": 147.47,
+    "M.pos": 79.406,
+    "cs.neg": 110.6,
+    "cs.pos": 47.644,
+    "ms.neg": 36.867,
+    "ms.pos": 31.762,
+    "csWidth": 2.5,
+    "csIntNegAs": 1909.1,
+    "AsMin": 900,
+    "sMax": 400
+   },
+   "pass": null
+  },
+  {
+   "id": "TW-2b",
+   "name": "Test: the same panel as an end span without edge beam",
+   "method": "USD",
+   "input": {
+    "mode": "moments",
+    "l1": 6,
+    "l2": 5,
+    "c1": 500,
+    "c2": 500,
+    "h": 200,
+    "d": 160,
+    "fc": 28,
+    "fy": 420,
+    "db": 12,
+    "wD": 6,
+    "wL": 3,
+    "addSelf": false,
+    "span": "end",
+    "edge": "noEdgeBeam",
+    "af1": 0,
+    "bt": 0,
+    "threeSpans": true,
+    "spansSimilar": true
+   },
+   "expect": {
+    "M.extNeg": 58.988,
+    "M.pos": 117.98,
+    "M.intNeg": 158.81,
+    "cs.extNeg": 58.988,
+    "cs.pos": 70.785,
+    "cs.intNeg": 119.11
+   },
+   "pass": null
+  },
+  {
+   "id": "TW-3",
+   "name": "Test: punching at an interior column, 500 × 500",
+   "method": "USD",
+   "input": {
+    "mode": "punching",
+    "c1": 500,
+    "c2": 500,
+    "d": 160,
+    "fc": 28,
+    "lambda": 1,
+    "location": "interior",
+    "vuFrom": "panel",
+    "Vu": 350,
+    "qu": 12,
+    "l1": 6,
+    "l2": 5,
+    "Msc": null
+   },
+   "expect": {
+    "Vu": 354.77,
+    "bo": 2640,
+    "vc": 1.7462,
+    "phiVc": 1.3096,
+    "vu": 0.8399,
+    "dc": 0.64132
+   },
+   "status": {
+    "Punching shear": "OK"
+   },
+   "pass": true
+  },
+  {
+   "id": "TW-3b",
+   "name": "Test: the same column with Msc = 40 kN·m",
+   "method": "USD",
+   "input": {
+    "mode": "punching",
+    "c1": 500,
+    "c2": 500,
+    "d": 160,
+    "fc": 28,
+    "lambda": 1,
+    "location": "interior",
+    "vuFrom": "panel",
+    "Vu": 350,
+    "qu": 12,
+    "l1": 6,
+    "l2": 5,
+    "Msc": 40
+   },
+   "expect": {
+    "gammaF": 0.6,
+    "gammaV": 0.4,
+    "Jc": 31117000000,
+    "vuMax": 1.0096,
+    "dcM": 0.77088
+   },
+   "dc": {
+    "Punching shear": 0.77088
+   },
+   "pass": true
+  }
+ ]
+}

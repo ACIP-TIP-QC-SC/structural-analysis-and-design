@@ -1,0 +1,66 @@
+{
+ "module": "found/dowels",
+ "calc": "js/modules/found/dowels.calc.js",
+ "cases": [
+  {
+   "id": "DW-1",
+   "name": "Test: 400 × 400 column on a 2.5 m footing, Pu 2500 kN",
+   "method": null,
+   "input": {
+    "mode": "dowels",
+    "c1": 400,
+    "c2": 400,
+    "fcCol": 28,
+    "fcFtg": 21,
+    "B": 2.5,
+    "L": 2.5,
+    "h": 600,
+    "Pu": 2500,
+    "fy": 420,
+    "dbCol": 25,
+    "dbDowel": 16,
+    "dbFtg": 20
+   },
+   "expect": {
+    "phiBnCol": 2475.2,
+    "phiBnFtg": 3712.8,
+    "excess": 24.8,
+    "AsExcess": 90.842,
+    "AsMin": 800,
+    "nDowels": 4,
+    "ldcFtg": 351.94,
+    "avail": 469,
+    "ldcCol": 476.24,
+    "lapSmall": 477.12,
+    "lap": 477.12
+   },
+   "pass": true
+  },
+  {
+   "id": "DW-1b",
+   "name": "Test: bearing only, the same column with Pu 2500 kN (fails on purpose)",
+   "method": null,
+   "input": {
+    "mode": "bearing",
+    "c1": 400,
+    "c2": 400,
+    "fcCol": 28,
+    "fcFtg": 21,
+    "B": 2.5,
+    "L": 2.5,
+    "h": 600,
+    "Pu": 2500,
+    "fy": 420,
+    "dbCol": 25,
+    "dbDowel": 16,
+    "dbFtg": 20
+   },
+   "expect": {
+    "phiBnCol": 2475.2,
+    "phiBnFtg": 3712.8,
+    "excess": 24.8
+   },
+   "pass": false
+  }
+ ]
+}

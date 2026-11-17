@@ -1,0 +1,198 @@
+{
+ "module": "found/pile-capacity",
+ "calc": "js/modules/found/pile-capacity.calc.js",
+ "cases": [
+  {
+   "id": "PL-1",
+   "name": "Test: 0.4 m round pile, 15 m in dry sand",
+   "method": null,
+   "input": {
+    "mode": "skin",
+    "shape": "round",
+    "D": 0.4,
+    "L": 15,
+    "layers": [
+     {
+      "t": 20,
+      "gamma": 17,
+      "phi": 35,
+      "cu": 0
+     }
+    ],
+    "wt": null,
+    "K": 1.3,
+    "delta": 28,
+    "FS": 3,
+    "Q": null,
+    "n1": 3,
+    "n2": 4,
+    "sp": 1.2,
+    "Qu": 1692.34,
+    "soil": "sand",
+    "cu": 60,
+    "Nc": 9
+   },
+   "expect": {
+    "Ap": 0.12566,
+    "p": 1.2566,
+    "qNq": 36465,
+    "ql": 5006.5,
+    "Qp": 629.13,
+    "Lcrit": 6,
+    "fMax": 70.505,
+    "Qs": 1063.2,
+    "Qu": 1692.3,
+    "Qall": 564.11
+   },
+   "pass": null
+  },
+  {
+   "id": "PL-1p",
+   "name": "Test: point resistance only, the same pile",
+   "method": null,
+   "input": {
+    "mode": "point",
+    "shape": "round",
+    "D": 0.4,
+    "L": 15,
+    "layers": [
+     {
+      "t": 20,
+      "gamma": 17,
+      "phi": 35,
+      "cu": 0
+     }
+    ],
+    "wt": null,
+    "K": 1.3,
+    "delta": 28,
+    "FS": 3,
+    "Q": null,
+    "n1": 3,
+    "n2": 4,
+    "sp": 1.2,
+    "Qu": 1692.34,
+    "soil": "sand",
+    "cu": 60,
+    "Nc": 9
+   },
+   "expect": {
+    "NqStar": 143,
+    "Qp": 629.13
+   },
+   "pass": null
+  },
+  {
+   "id": "PL-2",
+   "name": "Test: 0.4 m round pile, 20 m in clay, cu 60 kPa",
+   "method": null,
+   "input": {
+    "mode": "skin",
+    "shape": "round",
+    "D": 0.4,
+    "L": 20,
+    "layers": [
+     {
+      "t": 25,
+      "gamma": 18,
+      "phi": 0,
+      "cu": 60
+     }
+    ],
+    "wt": null,
+    "K": 1.3,
+    "delta": 28,
+    "FS": 3,
+    "Q": null,
+    "n1": 3,
+    "n2": 4,
+    "sp": 1.2,
+    "Qu": 1692.34,
+    "soil": "sand",
+    "cu": 60,
+    "Nc": 9
+   },
+   "expect": {
+    "Qp": 67.858,
+    "Qs": 934.94,
+    "Qu": 1002.8,
+    "Qall": 334.27
+   },
+   "pass": null
+  },
+  {
+   "id": "PL-3",
+   "name": "Test: 3 × 4 group in sand, spacing 1.2 m",
+   "method": null,
+   "input": {
+    "mode": "group",
+    "shape": "round",
+    "D": 0.4,
+    "L": 15,
+    "layers": [
+     {
+      "t": 20,
+      "gamma": 17,
+      "phi": 35,
+      "cu": 0
+     }
+    ],
+    "wt": null,
+    "K": 1.3,
+    "delta": 28,
+    "FS": 3,
+    "Q": null,
+    "n1": 3,
+    "n2": 4,
+    "sp": 1.2,
+    "Qu": 1692.34,
+    "soil": "sand",
+    "cu": 60,
+    "Nc": 9
+   },
+   "expect": {
+    "theta": 18.435,
+    "eta": 0.70982,
+    "Qg": 14415
+   },
+   "pass": null
+  },
+  {
+   "id": "PL-3b",
+   "name": "Test: 3 × 4 group in clay, block failure checked",
+   "method": null,
+   "input": {
+    "mode": "group",
+    "shape": "round",
+    "D": 0.4,
+    "L": 20,
+    "layers": [
+     {
+      "t": 20,
+      "gamma": 17,
+      "phi": 35,
+      "cu": 0
+     }
+    ],
+    "wt": null,
+    "K": 1.3,
+    "delta": 28,
+    "FS": 3,
+    "Q": null,
+    "n1": 3,
+    "n2": 4,
+    "sp": 1.2,
+    "Qu": 1002.8,
+    "soil": "clay",
+    "cu": 60,
+    "Nc": 9
+   },
+   "expect": {
+    "block": 22368,
+    "sumQu": 12034,
+    "Qg": 12034
+   },
+   "pass": null
+  }
+ ]
+}
