@@ -226,7 +226,7 @@ function slenderness(input, env) {
   rec.add('Minimum moment', S`M2,min = Pu (${K.M2min.a} + ${K.M2min.b} h), h in mm`, S`M2,min = ${v(Pu, F)} (${K.M2min.a} + ${K.M2min.b} · ${v(h, L)}) / 1000`, S`M2,min = ${u(M2min, M)}${useMin ? ' > M2: use M2,min and Cm = 1.0' : ' ≤ M2'}`, 'col.M2min');
   if (useMin) { M2 = M2min; Cm = K.Cm.transverse; }
   Object.assign(vals, { Ec, Ig, EI, Pc, Cm, M2min });
-  if (Pu >= K.Pc075 * Pc) return env.stop(K.tooSlender);
+  if (Pu >= K.Pc075 * Pc) return env.stop('Pu reaches ' + K.Pc075 + ' Pc, so the moment magnifier has no finite value (' + ed.clauses['col.delta'].nscp + '). Enlarge the column.');
   const delta = Math.max(1, Cm / (1 - Pu / (K.Pc075 * Pc))), Mc = delta * M2;
   rec.add('Moment magnifier', S`δ = Cm / (1 − Pu / (${K.Pc075} Pc)) ≥ 1.0`, S`δ = ${Cm} / (1 − ${v(Pu, F)} / (${K.Pc075} · ${v(Pc, F)}))`, S`δ = ${delta}`, 'col.delta');
   vals.delta = delta;

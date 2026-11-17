@@ -170,7 +170,7 @@ function run(input, ctx) {
   const qs = R / area;
   out.checks.unshift(check('Soil pressure', ['service pressure', qs, PR], ['qa', qa, PR], qs / qa, 'found.baseArea'));
   // Longitudinal steel
-  const T = C.twoWaySlab.asMin, ratio = fy >= T.fyBreak ? T.at : T.below;
+  const ratio = C.AsMinSlabRatio(fy);   // Table 408.6.1.1 (same values as Table 424.4.3.2)
   const steel = (Mu, wd) => { if (!(Mu > 0)) return 0; const r = requiredSteelRect({ b: wd * 1000, d, fc, fy, Mu: Mu * 1e6 }, ed); return r.ok ? r.As : NaN; };
   const wMid = widthAt(x0), AsTop = steel(Math.abs(Math.min(M0, 0)), wMid), AsBotB = steel(Math.max(MB, 0), widthAt(xB)), AsBotA = steel(Math.max(MA, 0), widthAt(xA));
   const AsMin = ratio * wMid * 1000 * h;

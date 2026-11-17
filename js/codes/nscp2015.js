@@ -178,7 +178,7 @@ const concrete = {
     },
     betaTMax: 2.5,
     beamShare: 0.85,                                                    // 408.10.5.7
-    asMin: { fyBreak: 420, below: 0.0020, at: 0.0018 },                 // Table 408.6.1.1 as worded in the hand-off
+    asMin: { fyBreak: 420, below: 0.0020, at: 0.0018, floor: 0.0014 },   // Table 408.6.1.1: 0.0018 x 420 / fy, not less than 0.0014, for fy >= 420 (see AsMinSlabRatio)
     sMax: { timesH: 2, max: 450 }                                       // 408.7.2.2
   },
   punching: { gammaF: 2 / 3 }                                           // 408.4.2.3.2
@@ -371,7 +371,7 @@ const found = {
   presumptiveNote: 'May be increased 20% for each additional 300 mm of width or depth beyond 300 mm, up to three times the tabulated value (no increase for width in clay).',
   bandNote: 'see NSCP 2015 Section 413.3.3 for the band rule',
   // ---- column-to-footing bearing and dowels (Section 9.9)
-  dowel: { frustum: 4, sqrtMax: 2, minRatio: 0.005, minBars: 4, footingBarLayers: 2 },  // Table 422.8.3.2, 416.3.4.1
+  dowel: { frustum: 4, sqrtMax: 2, minRatio: 0.005, minBars: 4, footingBarLayers: 2 },  // Table 422.8.3.2, 416.3.4.1 (0.005 Ag); 4 bars is practice, not a code value
   // ---- combined and strap footings (Section 9.8)
   combined: { roundB: 0.05, stations: 400, thirdLow: 1 / 3, thirdHigh: 2 / 3 },
   pile: { note: 'Allowable pile loads shall be established by approved formulas, load tests or a foundation investigation (306.3). The static formulas here are one such method.', groupNote: 'Group action of piles is governed by 306.7.' },
@@ -380,6 +380,7 @@ const found = {
   // ---- retaining walls (Section 9.10)
   retaining: {
     FSoverturning: 1.5, FSsliding: 1.5,                                   // 206.6
+    minFluid: 4.7,                                                        // 206.6: drained, level backfill, kPa per m of depth
     earth: 1.6, dead: 1.2, surcharge: 1.6, toeDead: 0.9,                  // Eq. 203-2 load factors as used in the hand-off
     frictionNote: 'For silts and clays the friction used may not exceed one half of the normal force (305.7.4.1).',
     heelNote: 'Upward soil pressure under the heel is conservatively ignored.'
@@ -568,6 +569,7 @@ const clauses = {
   'sw.phi': c4('411.5.3.3', '11.5.3.3'),
   'sw.hMin': c4('Table 411.3.1.1', 'Table 11.3.1.1'),
   'rw.stability': only('206.6'),
+  'rw.minFluid': only('206.6'),
   'rw.friction': only('305.7.4.1'),
   'cf.design': c4('413.2.6', '13.2.6'),
   'cf.minSteel': c4('413.3.4', '13.3.4'),

@@ -74,14 +74,15 @@ export function flexuralStrengthDoubly(p, ed) {
     let lo = 1e-6, hi = p.d;
     for (let i = 0; i < 200; i++) {
       const mid = (lo + hi) / 2, sx = stress(mid);
-      if (k * mid + p.Asp * (sx.fsp - s85) - p.As * sx.fs > 0) hi = mid; else lo = mid;
+      if (k * mid + p.Asp * (sx.fsp - (sx.fsp > 0 && p.dp < beta1 * mid ? s85 : 0)) - p.As * sx.fs > 0) hi = mid; else lo = mid;
     }
     c = (lo + hi) / 2;
     compYields = ecu * (c - p.dp) / c >= ety;
   }
   const a = beta1 * c, esp = ecu * (c - p.dp) / c, et = ecu * (p.d - c) / c;
   const fsp = compYields ? p.fy : Math.max(-p.fy, E * esp), fs = tensYields ? p.fy : E * et;
-  const Cc = s85 * a * p.b, Cs = p.Asp * (fsp - s85);
+  // The concrete displaced by A's is deducted only where A's lies inside the compression block.
+  const Cc = s85 * a * p.b, Cs = p.Asp * (fsp - (fsp > 0 && p.dp < a ? s85 : 0));
   return { beta1, ety, c0, esp0, compYields, yields: tensYields, a, c, esp, et, fsp, fs, phi: C.phi.flexAxial(et, p.fy), Cc, Cs, Mn: Cc * (p.d - a / 2) + Cs * (p.d - p.dp), C: Cc + Cs, T: p.As * fs };
 }
 

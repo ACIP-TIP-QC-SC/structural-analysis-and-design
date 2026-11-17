@@ -38,9 +38,19 @@ function run(input, ctx) {
   // 1. coefficients
   const KaR = rankineKa(phi, beta), Kp = rankineKp(phi);
   const delta = input.delta > 0 ? input.delta : 0, KaC = coulombKa(phi, delta, beta);
-  const coul = input.method === 'coulomb', Ka = coul ? KaC : KaR, inc = coul ? delta : beta;
+  const coul = input.method === 'coulomb', inc = coul ? delta : beta;
+  let Ka = coul ? KaC : KaR;
   rec.add('Earth pressure coefficients', coul ? S`Coulomb, vertical back with wall friction δ: Ka = cos²φ' / [cos δ (1 + √(sin(φ' + δ) sin(φ' − β) / (cos δ cos β)))²]` : S`Rankine: Ka = cos β (cos β − √(cos²β − cos²φ')) / (cos β + √(cos²β − cos²φ'));  β = 0 gives tan²(45° − φ'/2)`,
     S`φ' = ${u(phi, DEG)}, β = ${u(beta, DEG)}${coul ? S`, δ = ${u(delta, DEG)}` : ''};  Rankine Ka = ${KaR}${delta > 0 ? S`, Coulomb Ka = ${KaC}` : ''}`, S`Ka = ${Ka};  Kp = tan²(45° + φ'/2) = ${Kp}`, 'theory.soil');
+  // 206.6: a wall retaining drained soil with a level surface is designed for at least 4.7 kPa per metre of depth.
+  const fluid = Ka * gamma * Math.cos(rad(inc));
+  if (beta === 0 && fluid < K.minFluid) {
+    const KaMin = K.minFluid / (gamma * Math.cos(rad(inc)));
+    rec.add('Minimum equivalent fluid pressure', S`level backfill: horizontal pressure ≥ ${u(K.minFluid, UW)} × depth`, S`Ka γ = ${Ka} · ${v(gamma, UW)} = ${u(fluid, UW)} < ${u(K.minFluid, UW)}`, S`Ka used = ${KaMin}`, 'rw.minFluid',
+      'NSCP 2015 sets this minimum for walls retaining drained soil with a level surface.');
+    out.notes.push('The earth pressure was raised to the 4.7 kPa per metre minimum of ' + ed.clauses['rw.minFluid'].nscp + '.');
+    Ka = KaMin;
+  }
   Object.assign(vals, { KaRankine: KaR, KaCoulomb: KaC, Kp, Ka });
   // 2. active force
   const Pa = 0.5 * gamma * Hp * Hp * Ka, ci = Math.cos(rad(inc)), sinI = Math.sin(rad(inc)), Pah = Pa * ci, Pav = Pa * sinI, Pq = q * Ka * Hp, Pqh = Pq * ci, Pqv = Pq * sinI;

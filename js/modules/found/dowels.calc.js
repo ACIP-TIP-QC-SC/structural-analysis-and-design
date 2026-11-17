@@ -47,7 +47,7 @@ function run(input, ctx) {
   const AsExcess = excess * 1e3 / (phi * fy), AsMin = K.minRatio * c1 * c2, AsReq = Math.max(AsExcess, AsMin);
   const n = Math.max(K.minBars, Math.ceil(AsReq / barArea(1, dbDowel) - 1e-9)), AsProv = barArea(n, dbDowel);
   rec.add('Dowel area for the excess load', S`As = (Pu − φBn) / (φ fy)`, S`As = ${v(excess, F)} × 10³ / (${phi} · ${v(fy, ST)})`, S`As = ${u(AsExcess, A)}`, 'dw.colBearing');
-  rec.add('Minimum dowel area', S`As,min = ${K.minRatio} Ag of the column;  at least ${K.minBars} bars`, S`As,min = ${K.minRatio} · ${v(c1 * c2, A)} = ${u(AsMin, A)}`,
+  rec.add('Minimum dowel area', S`As,min = ${K.minRatio} Ag of the column;  at least ${K.minBars} bars (usual practice, one per corner; the code sets only the area)`, S`As,min = ${K.minRatio} · ${v(c1 * c2, A)} = ${u(AsMin, A)}`,
     S`use ${n} - ${dbDowel} mm dowels, As = ${u(AsProv, A)}`, 'dw.minArea');
   const ldc = ldCompression({ db: dbDowel, fy, fc: fcFtg, lambda: 1, confined: false }, ed).ldc;
   const avail = h - cover - K.footingBarLayers * dbFtg - dbDowel;

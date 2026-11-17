@@ -132,7 +132,7 @@ function moments(input, env) {
   const cs = 2 * T.csWidth * Math.min(l1, l2), ms = l2 - cs, ratio = l2 / l1, af = (input.af1 > 0 ? input.af1 : 0) * ratio, bt = input.bt > 0 ? input.bt : 0;
   rec.add('Strip widths', S`column strip = 2 × ${T.csWidth} × min(ℓ1, ℓ2);  middle strip = ℓ2 − column strip`, S`column strip = 2 × ${T.csWidth} × ${v(Math.min(l1, l2), LM)}`, S`column strip = ${u(cs, LM)},  middle strip = ${u(ms, LM)}`, 'tw.csWidth');
   const beamFrac = T.beamShare * Math.min(af, 1);
-  const SP = T.sMax, sMax = Math.min(SP.timesH * h, SP.max), ratioMin = fy >= T.asMin.fyBreak ? T.asMin.at : T.asMin.below, Ab = barArea(1, db);
+  const SP = T.sMax, sMax = Math.min(SP.timesH * h, SP.max), ratioMin = C.AsMinSlabRatio(fy), Ab = barArea(1, db);
   const rows = [], M_ = {}, CS = {}, MS = {}, BM = {};
   const strip = (name, width, Mu, key) => {
     const b = width * 1000, AsMin = ratioMin * b * h;
