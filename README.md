@@ -6,8 +6,25 @@ A static website that solves reinforced concrete, steel and foundation design pr
 NSCP 2015 (7th Edition, Volume I) for civil engineering students. Every result shows a numbered
 worked solution with the code clause on every step.
 
-Plain HTML, CSS and JavaScript modules. No build step, no framework, no runtime dependency, no CDN,
-no analytics. Nothing is sent to a server.
+Plain HTML, CSS and JavaScript modules. No build step, no framework, no CDN, no analytics. Nothing
+is sent to a server. The only library is three.js (MIT), vendored in `vendor/three/` and loaded only
+when a Stress or 3D view is opened.
+
+## Drawing views
+
+Each module's live drawing has a Drawing / Stress / 3D switch and a Play button:
+
+- **Stress** colors the member blue (low) to red (high) in ten bands, with a legend. Reinforcement
+  has its own scale. Stresses are simple elastic distributions driven by the computed results
+  (for example the cracked section under M(x), shear flow, soil pressure with a 2:1 spread).
+- **3D** shows concrete translucent so the bars show; *Show reinforcement* turns them off. Steel is solid.
+- **Play** loops a 10 second animation: the load rises to the design load and on to failure at
+  design load ÷ governing D/C, with cracks appearing where the cracking load is passed, then the
+  failure motion for the governing check (flexural hinge, diagonal shear, punching, buckling,
+  bolt shear, overturning and so on). Movements are exaggerated.
+
+The views are illustrative, not a finite element analysis. Models are built in `js/ui/viz/models.js`
+(pure, testable in node) and drawn by `js/ui/viz/viz3d.js`.
 
 ## Run the site
 
@@ -37,6 +54,11 @@ node tests/smoke.mjs
 It starts its own static server, loads every preset of every built module in SI and English units
 and in light and dark themes, and checks the page text, the verdict and the layout widths.
 
+Drawing views: `node tests/viz.mjs` checks every preset's 3D model in node (finite stresses and
+movements). `node tests/viz-browser.mjs [module] [--shots]` opens the Stress, 3D and Play views of
+every module in a browser and checks that they draw without console errors (`--shots` saves
+screenshots to `tests/shots/`).
+
 Independent Python checks of the expected answers are in `tools/`.
 
 ## Layout
@@ -54,8 +76,10 @@ js/modules/steel/       groupElastic.js (elastic bolt and weld groups), common.j
 js/modules/found/       common.js (net pressure, two-way shear, footing steel)
 presets/                examples and test cases per module
 data/                   steel-shapes.csv and the generated steel-shapes.json
-tests/                  run.mjs, smoke.mjs, cases/*.json
+js/ui/viz/              models.js (3D, stress and animation models) and viz3d.js (three.js viewer)
+tests/                  run.mjs, smoke.mjs, viz.mjs, viz-browser.mjs, cases/*.json
 vendor/fonts/           IBM Plex Sans and IBM Plex Mono (SIL Open Font License)
+vendor/three/           three.js 0.160.1 module build and OrbitControls (MIT)
 ```
 
 ## Rules the code follows

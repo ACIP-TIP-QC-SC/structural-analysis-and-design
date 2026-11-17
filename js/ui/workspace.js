@@ -17,6 +17,7 @@ import { fmt, fmtQ, renderTokens } from '../core/format.js';
 import { fail } from '../core/steps.js';
 import * as store from '../core/storage.js';
 import { solutionText, buildReport, printReport, copyText } from '../core/report.js';
+import { buildModel, hasViz } from './viz/models.js';
 
 const METHOD_NAMES = {
   USD: 'USD (ultimate strength)', WSD: 'WSD (working stress, reference mode)',
@@ -39,10 +40,12 @@ export function createWorkspace(outlet, def, mod, group, route, app) {
   const st = {
     mode: def.modes.some((m) => m.id === route.mode) ? route.mode : def.modes[0].id,
     step: 1, vals: {}, presetId: '', banner: '', transient: false, customKeys: {},
-    show: { dim: true, info: true }, toolsOpen: false, result: null, shapeError: ''
+    show: { dim: true, info: true }, toolsOpen: false, result: null, shapeError: '',
+    view: '2d', playing: false, rebar: true
   };
   (def.drawOptions || []).forEach((o) => { st.show[o.key] = o.default !== false; });
   let timer = null, parts = {};
+  let viz = null, vizHost = null, vizLoading = null, vizModel = null;
 
   const edition = () => app.edition();
   const sys = () => app.state.units;
@@ -204,6 +207,11 @@ export function createWorkspace(outlet, def, mod, group, route, app) {
     catch (e) { return null; }
   }
   function savePng() {
+    if (st.view !== '2d' && viz) {
+      const link = document.createElement('a');
+      link.download = def.id.replace('/', '-') + '-' + st.mode + '-' + st.view + '.png'; link.href = viz.png(); link.click();
+      return;
+    }
     const live = parts.draw && parts.draw.querySelector('svg.dg');
     if (!live) return;
     const clone = live.cloneNode(true);
@@ -275,14 +283,62 @@ export function createWorkspace(outlet, def, mod, group, route, app) {
   }
   function goStep(i) { st.step = Math.max(0, Math.min(stepNames().length - 1, i)); renderAll(); }
 
+  // ---- 3D, stress and animation views (three.js is loaded only when first needed)
+  function vizBar(model) {
+    const set = (v) => { st.view = v; if (v === '2d') st.playing = false; refresh(); };
+    const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Drawing view' },
+      [['2d', 'Drawing'], ['stress', 'Stress'], ['3d', '3D']].map(([v, label]) => h('button', {
+        type: 'button', class: st.view === v ? 'on' : '', 'aria-pressed': String(st.view === v),
+        disabled: v === 'stress' && !(model && model.stress) ? true : null,
+        title: v === 'stress' ? 'Stress distribution with a color legend' : v === '3d' ? '3D view; drag to orbit, scroll to zoom' : '2D drawing to scale',
+        onClick: () => set(v) }, label)));
+    const play = h('button', {
+      type: 'button', class: 'btn vz-play' + (st.playing ? ' pri' : ''), 'aria-pressed': String(st.playing),
+      disabled: !model || model.noAnim ? true : null,
+      title: 'Loop a 10 second animation of the deflection and failure',
+      onClick: () => { st.playing = !st.playing; if (st.playing && st.view === '2d') st.view = '3d'; refresh(); } }, st.playing ? '❚❚ Pause' : '▶ Play');
+    const rebar = model && model.hasRebar && st.view !== '2d'
+      ? h('label', { class: 'opt vz-opt' }, h('input', { type: 'checkbox', checked: st.rebar, onChange: (e) => { st.rebar = e.target.checked; refresh(); } }), ' Show reinforcement')
+      : null;
+    return h('div', { class: 'row vz-bar' }, seg, play, rebar);
+  }
+  function vizView(model) {
+    if (!vizHost) vizHost = h('div', { class: 'vz-host' });
+    const opts = () => ({ view: st.view, rebar: st.rebar, playing: st.playing, fq: (val, q, unit = true) => fmtQ(val, q, sys(), unit),
+      bg: getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff' });
+    vizModel = model;
+    if (viz) viz.update(model, opts());
+    else if (!vizLoading) {
+      vizLoading = import('./viz/viz3d.js').then((mod) => {
+        if (!vizHost) return;
+        viz = mod.createViewer(vizHost);
+        if (viz && vizModel && st.view !== '2d') viz.update(vizModel, opts());
+      }).catch(() => { if (vizHost) vizHost.appendChild(h('p', { class: 'muted small' }, 'The 3D view could not be loaded.')); });
+    }
+    return vizHost;
+  }
+  function currentModel() {
+    if (!hasViz(def.id) || !st.result || !st.result.ok) return null;
+    try { return buildModel(def.id, st.mode, siInput().input, st.result); } catch (e) { return null; }
+  }
+
   function drawCard() {
     const card = h('section', { class: 'card diacard o-draw', 'aria-label': 'Live drawing' });
-    card.appendChild(h('h3', { class: 'h3', style: 'margin:0' }, 'Live drawing'));
+    const model = currentModel();
+    if (!model) { st.view = '2d'; st.playing = false; }
+    if (st.view === 'stress' && !model.stress) st.view = '3d';
+    card.appendChild(h('div', { class: 'row sb vz-head' }, h('h3', { class: 'h3', style: 'margin:0' }, 'Live drawing'), model ? vizBar(model) : null));
     const chips = [edition().short].concat(method() ? [method()] : []);
     ((st.result.diagram && st.result.diagram.chips) || []).forEach((c) => chips.push(renderTokens(c, sys())));
     card.appendChild(h('div', { class: 'info' + (st.show.info ? '' : ' hide') }, chips.map((t) => h('span', { class: 'chip' }, t))));
-    const svg = drawSvg();
-    card.appendChild(svg || h('p', { class: 'muted small' }, 'The drawing appears when the inputs are valid.'));
+    if (st.view !== '2d' && model) {
+      card.appendChild(vizView(model));
+      card.appendChild(h('p', { class: 'muted small vz-note' }, 'Illustrative view driven by the computed results, not a finite element analysis. Drag to orbit, scroll to zoom.'));
+    } else {
+      if (viz) viz.update(null, { view: '2d' });
+      const svg = drawSvg();
+      card.appendChild(svg || h('p', { class: 'muted small' }, 'The drawing appears when the inputs are valid.'));
+    }
     card.appendChild(h('button', { type: 'button', class: 'tooltab' + (st.toolsOpen ? ' open' : ''), 'aria-label': 'Drawing options', 'aria-expanded': String(st.toolsOpen), onClick: () => { st.toolsOpen = !st.toolsOpen; refresh(); } }, st.toolsOpen ? '›' : '‹'));
     const opts = [{ key: 'dim', label: 'Dimensions' }].concat(def.drawOptions || [], [{ key: 'info', label: 'Design info' }]);
     card.appendChild(h('div', { class: 'tools' + (st.toolsOpen ? ' open' : '') },
@@ -327,7 +383,7 @@ export function createWorkspace(outlet, def, mod, group, route, app) {
         h('div', { class: 'row' }, h('h2', { class: 'h2' }, def.title), h('span', { class: 'tag' }, modeLabel),
           method() === 'WSD' ? h('span', { class: 'pill warn' }, 'WSD reference mode') : null)),
       h('div', { class: 'row' }, copyBtn,
-        h('button', { type: 'button', class: 'btn', onClick: () => { const live = parts.draw && parts.draw.querySelector('svg.dg'); buildReport(reportData(), live ? live.cloneNode(true) : null); printReport(def.id.replace('/', '-') + '-' + st.mode); } }, 'Print report'),
+        h('button', { type: 'button', class: 'btn', onClick: () => { const live = (parts.draw && parts.draw.querySelector('svg.dg')) || drawSvg(); buildReport(reportData(), live ? live.cloneNode(true) : null); printReport(def.id.replace('/', '-') + '-' + st.mode); } }, 'Print report'),
         shareBtn,
         h('button', { type: 'button', class: 'btn', onClick: reset }, 'Reset'))));
     if (st.banner) outlet.appendChild(h('div', { class: 'banner', role: 'status' }, h('span', null, st.banner), h('button', { type: 'button', class: 'btn', 'aria-label': 'Dismiss', onClick: () => { st.banner = ''; renderAll(); } }, 'Dismiss')));
@@ -370,8 +426,8 @@ export function createWorkspace(outlet, def, mod, group, route, app) {
       if (key === 'units') { st.vals = convertVals(st.vals, prev, sys()); save(); }
       renderAll();
     },
-    destroy() { clearTimeout(timer); },
+    destroy() { clearTimeout(timer); if (viz) viz.dispose(); viz = null; vizHost = null; },
     // Used by the browser smoke test.
-    debug: { state: st, siInput: () => siInput().input, loadPreset, presets: () => (def.presets || []).filter((p) => p.mode === st.mode) }
+    debug: { state: st, siInput: () => siInput().input, loadPreset, viz: () => viz, model: currentModel, presets: () => (def.presets || []).filter((p) => p.mode === st.mode) }
   };
 }
