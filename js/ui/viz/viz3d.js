@@ -117,7 +117,36 @@ export function createViewer(host) {
   canvas.className = 'vz-canvas';
   canvas.setAttribute('aria-label', '3D view of the member. Drag to orbit, scroll to zoom.');
   host.appendChild(canvas);
-  const legend = document.createElement('div'); legend.className = 'vz-legend'; host.appendChild(legend);
+  // Legend: compact by default; can be expanded to the full table (resizable), minimized, or dragged.
+  const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private mode */ } } };
+  let lmode = ['compact', 'full', 'min'].includes(store.get('vz.legend')) ? store.get('vz.legend') : 'compact';
+  let lpos = null;
+  const legend = document.createElement('div'); legend.className = 'vz-legend';
+  legend.innerHTML = '<div class="vz-lh" title="Drag to move"><span class="vz-lt"></span><span class="vz-lbtns">' +
+    '<button type="button" class="vz-lbtn" data-act="size"></button><button type="button" class="vz-lbtn" data-act="min"></button></span></div><div class="vz-lb"></div>';
+  host.appendChild(legend);
+  const lTitle = legend.querySelector('.vz-lt'), lBody = legend.querySelector('.vz-lb');
+  const bSize = legend.querySelector('[data-act=size]'), bMin = legend.querySelector('[data-act=min]');
+  function setMode(m) {
+    lmode = m; store.set('vz.legend', m);
+    if (m !== 'full') { legend.style.width = ''; legend.style.height = ''; }
+    drawLegend();
+    if (model) { refit(); if (!playing) draw(); }
+  }
+  bSize.addEventListener('click', () => setMode(lmode === 'full' ? 'compact' : 'full'));
+  bMin.addEventListener('click', () => setMode(lmode === 'min' ? 'compact' : 'min'));
+  const head = legend.querySelector('.vz-lh');
+  head.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('button') || getComputedStyle(legend).position !== 'absolute') return;
+    e.preventDefault();
+    const hr = host.getBoundingClientRect(), lr = legend.getBoundingClientRect(), dx = e.clientX - lr.left, dy = e.clientY - lr.top;
+    const move = (ev) => {
+      const x = Math.max(0, Math.min(hr.width - lr.width, ev.clientX - hr.left - dx)), y = Math.max(0, Math.min(hr.height - 40, ev.clientY - hr.top - dy));
+      lpos = [x, y]; legend.style.left = x + 'px'; legend.style.top = y + 'px';
+    };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); if (model) { refit(); if (!playing) draw(); } };
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+  });
   const hud = document.createElement('div'); hud.className = 'vz-hud'; host.appendChild(hud);
 
   const scene = new THREE.Scene();
@@ -142,8 +171,9 @@ export function createViewer(host) {
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
   }
-  const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(() => { size(); if (!playing) draw(); }) : null;
-  if (ro) ro.observe(host);
+  // Refit when the view or the legend changes size (the full legend can be resized by its corner).
+  const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(() => { size(); if (model && opts.view) refit(); if (!playing) draw(); }) : null;
+  if (ro) { ro.observe(host); ro.observe(legend); }
 
   function clearModel() {
     items.forEach((it) => { it.mesh.geometry.dispose(); it.mesh.material.dispose(); });
@@ -212,6 +242,14 @@ export function createViewer(host) {
     if (!(smax.main > 0)) { smax.main = smax.rebar > 0 ? 0 : 1; smaxEnd.main = smax.main; }
   }
 
+  function refit() {
+    const key = model.fitKey || JSON.stringify(model.bounds);
+    // Fit the model into the space right of the legend (unless it is minimized, moved, or stacked below on a phone).
+    const W = host.clientWidth || 600;
+    const beside = opts.view === 'stress' && lmode !== 'min' && !lpos && legend.style.display !== 'none' && getComputedStyle(legend).position === 'absolute';
+    const f = beside ? Math.min(0.3, Math.round(((legend.offsetWidth + 16) / (2 * W)) * 50) / 50) : 0;
+    if (key + '|' + f !== fitKey) { fitKey = key + '|' + f; fit(f); }
+  }
   // In the stress view the model is fitted into the area right of the legend.
   function fit(f) {
     const b = model.bounds; // [[x0,y0,z0],[x1,y1,z1]]
@@ -303,18 +341,36 @@ export function createViewer(host) {
     const st = opts.view === 'stress' && model && model.stress;
     legend.style.display = st ? '' : 'none';
     if (!st) return;
+    legend.className = 'vz-legend vz-' + lmode;
+    bSize.textContent = lmode === 'full' ? '⤡' : '⤢';
+    bSize.title = lmode === 'full' ? 'Compact legend' : 'Full legend (drag the corner to resize)';
+    bSize.setAttribute('aria-label', bSize.title);
+    bSize.style.display = lmode === 'min' ? 'none' : '';
+    bMin.textContent = lmode === 'min' ? '+' : '–';
+    bMin.title = lmode === 'min' ? 'Show the legend' : 'Minimize the legend';
+    bMin.setAttribute('aria-label', bMin.title);
+    if (lpos) { legend.style.left = lpos[0] + 'px'; legend.style.top = lpos[1] + 'px'; }
+    lTitle.textContent = lmode === 'min' ? 'Legend' : st.label;
+    if (lmode === 'min') { lBody.innerHTML = ''; return; }
     const sc = playing ? smaxEnd : smax;
     const fq = opts.fq || ((v) => v.toFixed(1));
     const unit = esc(fq(1, st.q, true).replace(/^[-\d.,\s]+/, ''));
+    const bars = smax.rebar > 0 && (!model.hasRebar || opts.rebar);
+    const note = '<div class="vz-lu">' + unit + (playing ? ', scale up to the failure load' : ', at the design load') + '</div>';
+    if (lmode === 'compact') {
+      const strip = (title, max) => '<div class="vz-cs">' + (title ? '<span class="vz-ct">' + esc(title) + '</span>' : '') +
+        '<span class="vz-cb">' + Array.from({ length: BANDS }, (_, i) => '<i style="background:' + css(bandColor(i)) + '"></i>').join('') + '</span>' +
+        '<span class="vz-cl"><span>' + esc(fq(0, st.q, false)) + '</span><span>' + esc(fq(max, st.q, false)) + '</span></span></div>';
+      lBody.innerHTML = note + (sc.main > 0 ? strip(bars ? 'Concrete' : '', sc.main) : '') + (bars ? strip('Bars', sc.rebar) : '');
+      return;
+    }
     const scale = (title, max) => {
       const rows = [];
       for (let i = BANDS - 1; i >= 0; i--) rows.push('<div class="vz-row"><span class="vz-sw" style="background:' + css(bandColor(i)) + '"></span><span>' + esc(fq((max * (i + 1)) / BANDS, st.q, false)) + '</span></div>');
       rows.push('<div class="vz-row"><span class="vz-sw vz-none"></span><span>' + esc(fq(0, st.q, false)) + '</span></div>');
       return '<div class="vz-scale">' + (title ? '<div class="vz-lu">' + esc(title) + '</div>' : '') + rows.join('') + '</div>';
     };
-    const bars = smax.rebar > 0 && (!model.hasRebar || opts.rebar);
-    legend.innerHTML = '<div class="vz-lt">' + esc(st.label) + '</div><div class="vz-lu">' + unit + (playing ? ', scale up to the failure load' : ', at the design load') + '</div>' +
-      '<div class="vz-scales">' + (sc.main > 0 ? scale(bars ? 'Concrete' : '', sc.main) : '') + (bars ? scale('Bars', sc.rebar) : '') + '</div>';
+    lBody.innerHTML = note + '<div class="vz-scales">' + (sc.main > 0 ? scale(bars ? 'Concrete' : '', sc.main) : '') + (bars ? scale('Bars', sc.rebar) : '') + '</div>';
   }
 
   function draw() { renderer.render(scene, camera); }
@@ -336,11 +392,9 @@ export function createViewer(host) {
       if (bg !== o.bg) { bg = o.bg; scene.background = new THREE.Color(o.bg || '#f4f5f7'); }
       size();
       if (rebuild) build();
-      const key = model.fitKey || JSON.stringify(model.bounds);
-      const f = opts.view === 'stress' && (host.clientWidth || 600) > 640 ? Math.min(0.17, 160 / (host.clientWidth || 600)) : 0;
-      if (key + f !== fitKey) { fitKey = key + f; fit(f); }
       playing = !!o.playing;
       drawLegend();
+      refit();
       if (playing && !wasPlaying) { t0 = performance.now() - tNow * 1000; cancelAnimationFrame(raf); raf = requestAnimationFrame(frame); }
       if (!playing) { cancelAnimationFrame(raf); tNow = 0; apply({ lam: 1, brk: 0, phase: 'static' }); draw(); }
     },

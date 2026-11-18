@@ -72,17 +72,33 @@ for (const id of MODULES.filter((m) => !ONLY || m.includes(ONLY))) {
         const info = await page.evaluate((v) => {
           const c = document.querySelector('.vz-canvas'), lg = document.querySelector('.vz-legend');
           const g = c.getContext('webgl2') || c.getContext('webgl');
-          const w = c.width, h = c.height, px = new Uint8Array(4 * 64);
+          const w = c.width, h = c.height, N = 400, px = new Uint8Array(4 * N);
           let colored = 0;
-          for (let i = 0; i < 64; i++) { g.readPixels(Math.floor(w * (0.2 + 0.6 * (i % 8) / 8)), Math.floor(h * (0.2 + 0.6 * Math.floor(i / 8) / 8)), 1, 1, g.RGBA, g.UNSIGNED_BYTE, px.subarray(i * 4, i * 4 + 4)); }
-          const ref = [px[0], px[1], px[2]];
-          for (let i = 1; i < 64; i++) if (Math.abs(px[i * 4] - ref[0]) + Math.abs(px[i * 4 + 1] - ref[1]) + Math.abs(px[i * 4 + 2] - ref[2]) > 30) colored++;
+          for (let i = 0; i < N; i++) { g.readPixels(Math.floor(w * (0.05 + 0.9 * (i % 20) / 20)), Math.floor(h * (0.05 + 0.9 * Math.floor(i / 20) / 20)), 1, 1, g.RGBA, g.UNSIGNED_BYTE, px.subarray(i * 4, i * 4 + 4)); }
+          // Compare with the background colour in the bottom-right corner.
+          const bg = new Uint8Array(4); g.readPixels(w - 3, 2, 1, 1, g.RGBA, g.UNSIGNED_BYTE, bg);
+          const ref = [bg[0], bg[1], bg[2]];
+          for (let i = 0; i < N; i++) if (Math.abs(px[i * 4] - ref[0]) + Math.abs(px[i * 4 + 1] - ref[1]) + Math.abs(px[i * 4 + 2] - ref[2]) > 30) colored++;
           return { w, h, colored, legend: lg && lg.style.display !== 'none' ? lg.innerText : '' };
         }, v);
         views++;
         ok(info.w > 100 && info.h > 100, tag + v + ': canvas too small');
         ok(info.colored > 2, tag + v + ': nothing drawn');
         if (v === 'Stress') ok(/\d/.test(info.legend) && !/NaN|undefined|Infinity/.test(info.legend), tag + 'legend missing or bad: ' + info.legend.slice(0, 80));
+        if (v === 'Stress' && pid === presets[0]) {
+          // Legend controls: full, minimize, restore, drag.
+          const lg = page.locator('.vz-legend');
+          await lg.locator('[data-act=size]').click();
+          ok(await lg.evaluate((e) => e.classList.contains('vz-full') && e.querySelectorAll('.vz-row').length >= 11), tag + 'full legend not shown');
+          await lg.locator('[data-act=min]').click();
+          ok(await lg.evaluate((e) => e.classList.contains('vz-min') && e.offsetHeight < 50), tag + 'legend did not minimize');
+          await lg.locator('[data-act=min]').click();
+          ok(await lg.evaluate((e) => e.classList.contains('vz-compact')), tag + 'legend did not restore to compact');
+          const hb = await lg.locator('.vz-lh').boundingBox();
+          await page.mouse.move(hb.x + 20, hb.y + 6); await page.mouse.down(); await page.mouse.move(hb.x + 140, hb.y + 60, { steps: 4 }); await page.mouse.up();
+          const nb = await lg.boundingBox();
+          ok(nb.x > hb.x + 60 && nb.y > hb.y + 20, tag + 'legend did not move when dragged');
+        }
         if (SHOTS && pid === presets[0]) await page.locator('.vz-host').screenshot({ path: join(shotDir, (id + '-' + mode + '-' + v).replace(/\//g, '-') + '.png') });
       }
       // Play: run the animation and jump to the loading and failure phases

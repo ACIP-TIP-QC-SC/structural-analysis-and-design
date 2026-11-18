@@ -14,7 +14,8 @@ when a Stress or 3D view is opened.
 
 Each module's live drawing has a Drawing / Stress / 3D switch and a Play button:
 
-- **Stress** colors the member blue (low) to red (high) in ten bands, with a legend. Reinforcement
+- **Stress** colors the member blue (low) to red (high) in ten bands, with a legend (compact by default;
+  it can be expanded to the full table and resized, minimized, or dragged aside). Reinforcement
   has its own scale. Stresses are simple elastic distributions driven by the computed results
   (for example the cracked section under M(x), shear flow, soil pressure with a 2:1 spread).
 - **3D** shows concrete translucent so the bars show; *Show reinforcement* turns them off. Steel is solid.
