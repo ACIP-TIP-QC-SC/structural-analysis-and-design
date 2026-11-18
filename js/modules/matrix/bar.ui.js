@@ -2,13 +2,13 @@
 import { solve as calcSolve, areaOf, nodePositions } from './bar.calc.js';
 import presetsFile from '../../../presets/matrix-bar.js';
 import { h } from '../../ui/dom.js';
-import { unitsField, qf, solveWith, resultCards, reportSections, listTables, signsCard, SIGNS, sectionHelper, saveCard } from './mxui.js';
+import { unitsField, qf, solveWith, resultCards, reportSections, listTables, SIGNS, sectionHelper, saveCard } from './mxui.js';
 import { drawModel, interactive, newCanvasState } from './modelCanvas.js';
+import { signsFigureCard } from './signs.js';
 import { SUPPORT_LABELS } from './analysis.js';
 
 const KIND = 'bar';
 const state = newCanvasState(KIND);
-state.view = 'model';
 const SUP = Object.entries(SUPPORT_LABELS.bar).map(([value, label]) => ({ value, label }));
 const isNum = (x) => typeof x === 'number' && isFinite(x);
 const nid = (r, i) => (isNum(r.id) ? r.id : i + 1);
@@ -83,9 +83,9 @@ export default {
   draw: (result, o) => drawModel(result, o, state, KIND),
   drawInteractive: (svg, ctx) => interactive(svg, ctx, cfg),
   drawOptions: [{ key: 'loads', label: 'Loads' }, { key: 'reactions', label: 'Reactions' }],
-  extraCards: (r, ctx) => resultCards(r, ctx, KIND),
-  reportExtra: (r, ctx, vals) => reportSections(r, ctx, listTables(fields('nodes', null, vals || {}), vals || {}, ctx.sys)),
-  setupExtra: (ctx) => h('div', { style: 'margin-top:12px' }, signsCard(KIND), saveCard('matrix/bar', ctx)),
+  extraCards: (r, ctx) => resultCards(r, ctx, KIND, state),
+  reportExtra: (r, ctx, vals) => reportSections(r, ctx, listTables(fields('nodes', null, vals || {}), vals || {}, ctx.sys), state),
+  setupExtra: (ctx) => h('div', { style: 'margin-top:12px' }, signsFigureCard(KIND), saveCard('matrix/bar', ctx)),
   signNote: SIGNS.bar,
   setupNote: 'Direct stiffness method, Kassimali Ch. 3 (axial bar elements). Results update as you type. Use Consistent units for book problems given with E = A = 1.',
   stepHelp: (step) => (step === 'Elements' ? 'The drawing places the nodes from the element lengths, left to right from the 1st node of each element.' : '')

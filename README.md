@@ -145,7 +145,11 @@ truss.ui.js     beam.ui.js     frame.ui.js     bar.ui.js
 mxui.js         units choice, fixed-decimal results, tables, the Matrices card, report sections,
                 the section helper (Fill A and I) and problem export / import as JSON
 matrixTable.js  labelled matrices with the partition colours (Kpp yellow, Kps red, Ksp blue, Kss green)
-modelCanvas.js  the model drawing, result views and input on the drawing (add joints and members)
+modelCanvas.js  the model drawing after the Excel programs (truss tension/compression, FBD, frame with
+                loads and reactions) and input on the drawing (add joints and members)
+diagrams.js     the result diagrams after the Excel programs: beam elastic curve, SFD and BMD on the FBD's
+                x scale; frame deflected shape, N, V, M; bar N, u and diagram values (no Stress or 3D view)
+signs.js        the sign-convention figures of the Setup step
 ```
 
 - **Units.** The matrix calc files work in one consistent set of units, an exception to the site rule

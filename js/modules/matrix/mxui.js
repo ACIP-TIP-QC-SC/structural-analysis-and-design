@@ -10,6 +10,7 @@ import { SUPPORT_LABELS, dofType } from './analysis.js';
 import { findShape } from '../../ui/shapepicker.js';
 import { shapeValue } from '../../core/shapes.js';
 import * as store from '../../core/storage.js';
+import { diagramsCard, diagramPanels } from './diagrams.js';
 
 // ---------------------------------------------------------------- units
 export const unitsField = () => ({
@@ -212,9 +213,9 @@ function localNames(kind, m) {
   return ['u_b', 'v_b', 'θ_b', 'u_e', 'v_e', 'θ_e'];
 }
 
-export function resultCards(r, ctx, kind) {
+export function resultCards(r, ctx, kind, state) {
   const sys = ctx.sys;
-  const top = [signsCard(kind)];
+  const top = [diagramsCard(r, ctx, kind, state || {}), signsCard(kind)];
   if (!r.ok) return { top, bottom: [] };
   const bottom = resultTables(r, sys).map(([t, hd, rows, note]) => table(t, hd, rows, note));
   bottom.push(matricesCard(r, sys));
@@ -358,12 +359,15 @@ export function listTables(fieldDefs, vals, sys) {
   });
   return out;
 }
-export function reportSections(r, ctx, inputTables) {
+export function reportSections(r, ctx, inputTables, state) {
   const sys = ctx.sys, D = r.diagram, out = [];
   const sec = (title, ...kids) => h('div', { class: 'mx-sec' }, h('h2', null, title), kids);
   const tbl = (head, rows) => h('table', null, h('thead', null, h('tr', null, head.map((x) => h('th', null, x)))), h('tbody', null, rows.map((row) => h('tr', null, row.map((c) => h('td', { class: 'mono' }, c))))));
   (inputTables || []).forEach(([t, head, rows]) => out.push(sec(t, tbl(head, rows))));
   if (!r.ok || !D.res) return out;
+  // the result diagrams (beams, frames, bars), as on the screen
+  const panels = diagramPanels(r, sys, D.kind, state || {}, () => {});
+  if (panels.length) out.push(sec('Diagrams', panels));
   const sc = mxScale(sys, D.units);
   const strips = (title, o) => h('div', null, h('div', { class: 'mx-sub' }, title), o.nFree != null ? partitionLegend() : null, matrixStrips(o));
   out.push(sec('Member matrices (' + sc.label + ')', D.res.map((m) => strips((D.kind === 'beam' ? 'Element ' : 'Member ') + m.id + ': K = Tᵀ k T' + (m.release !== 'none' ? ' (modified for the release, MT = ' + m.MT + ')' : ''), { rows: m.names, cols: m.names, data: scaleM(m.K, m.names, m.names, sc.K) }))));

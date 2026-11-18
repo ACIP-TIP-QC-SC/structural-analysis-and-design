@@ -2,8 +2,9 @@
 import { solve as calcSolve } from './truss.calc.js';
 import presetsFile from '../../../presets/matrix-truss.js';
 import { h } from '../../ui/dom.js';
-import { unitsField, qf, solveWith, resultCards, reportSections, listTables, signsCard, SIGNS, sectionHelper, saveCard } from './mxui.js';
+import { unitsField, qf, solveWith, resultCards, reportSections, listTables, SIGNS, sectionHelper, saveCard } from './mxui.js';
 import { drawModel, interactive, newCanvasState } from './modelCanvas.js';
+import { signsFigureCard } from './signs.js';
 import { SUPPORT_LABELS } from './analysis.js';
 
 const KIND = 'truss';
@@ -111,9 +112,9 @@ export default {
   draw: (result, o) => drawModel(result, o, state, KIND),
   drawInteractive: (svg, ctx) => interactive(svg, ctx, Object.assign({}, cfg, { beforeRemoveJoint: (i, rows, onChange) => beforeRemoveJoint(i, rows, onChange, ctx.vals) })),
   drawOptions: [{ key: 'loads', label: 'Loads' }, { key: 'reactions', label: 'Reactions' }],
-  extraCards: (r, ctx) => resultCards(r, ctx, KIND),
-  reportExtra: (r, ctx, vals) => reportSections(r, ctx, listTables(fields('joints', null, vals || {}), vals || {}, ctx.sys)),
-  setupExtra: (ctx) => h('div', { style: 'margin-top:12px' }, signsCard(KIND), saveCard('matrix/truss', ctx)),
+  extraCards: (r, ctx) => resultCards(r, ctx, KIND, state),
+  reportExtra: (r, ctx, vals) => reportSections(r, ctx, listTables(fields('joints', null, vals || {}), vals || {}, ctx.sys), state),
+  setupExtra: (ctx) => h('div', { style: 'margin-top:12px' }, signsFigureCard(KIND), saveCard('matrix/truss', ctx)),
   signNote: SIGNS.truss,
   setupNote: 'Direct stiffness method, Kassimali Ch. 3 (trusses). Results update as you type. Use Consistent units for book problems given with E = A = 1 or EI constant.',
   stepHelp: (step) => (step === 'Geometry' ? 'Add joint places a joint on the grid (hold Alt for no snap); Add member joins two joints. Select a joint or member to find its row; Delete removes it.' : '')

@@ -4,8 +4,9 @@ import presetsFile from '../../../presets/matrix-beam.js';
 import spanPresets from '../../../presets/matrix-beam-spans.js';
 import { h } from '../../ui/dom.js';
 import * as store from '../../core/storage.js';
-import { unitsField, qf, solveWith, resultCards, reportSections, listTables, signsCard, SIGNS, toCalc, sectionHelper, saveCard } from './mxui.js';
+import { unitsField, qf, solveWith, resultCards, reportSections, listTables, SIGNS, toCalc, sectionHelper, saveCard } from './mxui.js';
 import { drawModel, interactive, newCanvasState } from './modelCanvas.js';
+import { signsFigureCard } from './signs.js';
 import { SUPPORT_LABELS, RELEASE_LABELS } from './analysis.js';
 import { generate } from './beamSpans.js';
 
@@ -168,9 +169,9 @@ export default {
   draw: (result, o) => drawModel(result, o, state, KIND),
   drawInteractive: (svg, ctx) => interactive(svg, ctx, Object.assign({}, cfg, { noSelect: ctx.vals && !Array.isArray(ctx.vals.joints) })),
   drawOptions: [{ key: 'loads', label: 'Loads' }, { key: 'reactions', label: 'Reactions' }],
-  extraCards: (r, ctx) => resultCards(r, ctx, KIND),
-  reportExtra: (r, ctx, vals) => reportSections(r, ctx, listTables(fields(vals && Array.isArray(vals.spanSupports) && !Array.isArray(vals.joints) ? 'spans' : 'joints', null, vals || {}), vals || {}, ctx.sys)),
-  setupExtra: (ctx) => h('div', { style: 'margin-top:12px' }, signsCard(KIND), saveCard('matrix/beam', ctx)),
+  extraCards: (r, ctx) => resultCards(r, ctx, KIND, state),
+  reportExtra: (r, ctx, vals) => reportSections(r, ctx, listTables(fields(vals && Array.isArray(vals.spanSupports) && !Array.isArray(vals.joints) ? 'spans' : 'joints', null, vals || {}), vals || {}, ctx.sys), state),
+  setupExtra: (ctx) => h('div', { style: 'margin-top:12px' }, signsFigureCard(KIND), saveCard('matrix/beam', ctx)),
   signNote: SIGNS.beam,
   setupNote: 'Direct stiffness method, Kassimali Ch. 5 (beams). Results update as you type. Use Consistent units for book problems given with E = A = 1 or EI constant.',
   stepHelp: (step, mode) => (mode === 'spans' && step === 'Geometry' ? 'Joints are made at both ends, every support, every hinge and every end of an EI stretch, numbered left to right.' : '')

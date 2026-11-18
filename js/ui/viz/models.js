@@ -1191,106 +1191,7 @@ function loadTransfer(I, R, mode) {
     ampText: 'Deflection exaggerated. Colors show how the panel load is shared by the edge beams.' }, null);
 }
 
-
-// ================================================================== Matrix Analysis (direct stiffness method)
-// Built from the solved model in result.diagram (the calc's consistent units: kN and m in SI and
-// English modes; in Consistent mode the drawing is scaled so the structure spans about 10 m).
-// Analysis only: no capacity, so the Play view grows the load from 0 to the full load (lamEnd = 1).
-function matrixModel(I, R) {
-  const D = R.diagram || {};
-  if (!D.res || !D.res.length) return null;
-  const kind = D.kind, cons = D.units === 'consistent';
-  const J = new Map((D.joints || []).map((j) => [j.id, j]));
-  const xs = D.res.flatMap((m) => [J.get(m.i).x, J.get(m.j).x]), ys = D.res.flatMap((m) => [J.get(m.i).y || 0, J.get(m.j).y || 0]);
-  const spanRaw = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), 1e-12);
-  const sL = cons ? 10 / spanRaw : 1, span = spanRaw * sL;
-  const P3 = (j) => [j.x * sL, (j.y || 0) * sL, 0];
-  const lo = span / 400, hi = span / 22;
-  const parts = [];
-  // movement amplification: the largest movement shows as 4% of the span
-  let dmax = 0;
-  D.res.forEach((m) => m.st.dx.forEach((dx, q) => { dmax = Math.max(dmax, Math.hypot(dx, m.st.dy[q])); }));
-  const amp = dmax > 0 ? (0.04 * span) / (dmax * sL) : 0;
-  const along = (m, x, y) => { const a = J.get(m.i); const t = ((x / sL - a.x) * m.c + (y / sL - (a.y || 0)) * m.s); return clamp(t, 0, m.L); };
-  const interp = (m, key, x) => {
-    const st = m.st, arr = st[key];
-    let k = 1;
-    while (k < st.x.length - 1 && st.x[k] < x) k++;
-    const x0 = st.x[k - 1], x1 = st.x[k], t = x1 > x0 ? clamp((x - x0) / (x1 - x0), 0, 1) : 0;
-    return arr[k - 1] + (arr[k] - arr[k - 1]) * t;
-  };
-  // parallel bar elements between the same two nodes sit side by side across the view
-  const lanes = new Map(), groups = new Map();
-  if (kind === 'bar') {
-    D.res.forEach((m) => { const key = Math.min(m.i, m.j) + '-' + Math.max(m.i, m.j); if (!groups.has(key)) groups.set(key, []); groups.get(key).push(m.id); });
-    groups.forEach((ids) => ids.forEach((id, k) => lanes.set(id, k - (ids.length - 1) / 2)));
-  }
-  D.res.forEach((m) => {
-    const a = P3(J.get(m.i)), b = P3(J.get(m.j));
-    const segs = sg(m.L * sL, span / 60, 4, 60);
-    if (lanes.get(m.id)) { const dz = lanes.get(m.id) * clamp(span / 25, lo * 8, hi * 2); a[2] = dz; b[2] = dz; }
-    if (kind === 'beam') {
-      const Iv = pos(m.I, 1), hRaw = Math.pow(24 * Iv, 0.25);      // b = h/2: I = (h/2) h³ / 12
-      const hgt = clamp(cons ? span / 25 : hRaw, lo * 4, hi), bw = hgt / 2;
-      parts.push(P(BX(a[0], b[0], -hgt / 2, hgt / 2, -bw / 2, bw / 2, [segs, 4, 2]), 'steel', { role: 'mem', mem: m.id, depth: hgt, area: bw * hgt }));
-    } else {
-      const side = clamp(cons ? span / 60 : Math.sqrt(pos(m.A, 1e-4)), lo * 3, hi);
-      parts.push(P(CY(a, b, side / 2, segs, 10), 'steel', { role: 'mem', mem: m.id, depth: side, area: (PI * side * side) / 4 }));
-    }
-  });
-  const jr = clamp(span / 90, lo * 4, hi);
-  (D.ids || []).forEach((id) => {
-    const p = P3(J.get(id));
-    parts.push(P(BX(p[0] - jr, p[0] + jr, p[1] - jr, p[1] + jr, -jr, jr), 'steel', { role: 'joint', joint: id, stress: false }));
-    const j = J.get(id);
-    if (j.support && j.support !== 'free') parts.push(P(BX(p[0] - 2.2 * jr, p[0] + 2.2 * jr, p[1] - 4 * jr, p[1] - jr, -2 * jr, 2 * jr), 'support', { piece: 'S', role: 'support', stress: false }));
-  });
-  const memOf = new Map(D.res.map((m) => [m.id, m]));
-  const jointDisp = (id) => {
-    const q = D.dofNames.findIndex((nm, k) => D.dofJoint[k] === id);
-    if (kind === 'beam') return [0, D.U[q]];
-    if (kind === 'bar') return [D.U[q], 0];
-    return [D.U[q], D.U[q + 1]];
-  };
-  const stressOf = (m, x) => {
-    if (kind === 'truss' || kind === 'bar') return Math.abs(m.N) / (cons ? 1 : pos(m.A, 1) * 1000);
-    const M = Math.abs(interp(m, 'M', x)), N = Math.abs(interp(m, 'N', x));
-    if (cons) return M;
-    const Iv = pos(m.I, 1), Av = pos(m.A, 0);
-    const dRaw = kind === 'beam' ? Math.pow(24 * Iv, 0.25) : Math.sqrt(pos(m.A, 1e-4));
-    return (M * (dRaw / 2) / Iv + (Av > 0 ? N / Av : 0)) / 1000;     // kPa -> MPa
-  };
-  const label = cons ? (kind === 'truss' || kind === 'bar' ? 'Axial force |N| (consistent units; no section stress)' : 'Moment |M| (consistent units; no section stress)')
-    : kind === 'truss' || kind === 'bar' ? 'Axial stress |N|/A' : 'Bending and axial stress |M|/S + |N|/A';
-  const loads = [];
-  (D.joints || []).forEach((j) => {
-    if (!(D.ids || []).includes(j.id)) return;
-    const p = P3(j), L = span * 0.06;
-    if (j.FY) loads.push({ p: [p[0], p[1] + (j.FY < 0 ? jr * 2 + L : -jr * 2 - L), 0], dir: [0, Math.sign(j.FY), 0], len: L, piece: 'J:' + j.id });
-    if (j.FX) loads.push({ p: [p[0] + (j.FX > 0 ? -jr * 2 - L : jr * 2 + L), p[1], 0], dir: [Math.sign(j.FX), 0, 0], len: L, piece: 'J:' + j.id });
-  });
-  const model = finish({
-    parts, hasRebar: false, cracks: [], loads,
-    stress: { label, q: cons ? 'ratio' : 'stress', f(x, y, z, part, lam) { if (part.role !== 'mem') return 0; const m = memOf.get(part.mem); return lam * stressOf(m, along(m, x, y)); } },
-    disp(x, y, z, part, s0) {
-      if (part.piece === 'S' || !amp) return [0, 0, 0];
-      const r = s0.r;
-      const jid = part.role === 'joint' ? part.joint : typeof part.piece === 'string' && part.piece.startsWith('J:') ? Number(part.piece.slice(2)) : null;
-      if (jid != null) { const d = jointDisp(jid); return [d[0] * amp * sL * r, d[1] * amp * sL * r, 0]; }
-      const m = memOf.get(part.mem);
-      if (!m) return [0, 0, 0];
-      const t = along(m, x, y);
-      return [interp(m, 'dx', t) * amp * sL * r, interp(m, 'dy', t) * amp * sL * r, 0];
-    },
-    lamEnd: 1, noAnim: false,
-    ampText: 'Movements exaggerated × ' + (amp ? Number((amp).toPrecision(2)) : 0) + ' (exact deflected shape). The load grows from 0 to the full load.'
-  }, null);
-  model.failText = 'Analysis only: no capacity check';
-  model.note = 'Analysis only: no capacity check.' + (cons ? ' Consistent units: drawn to a 10 m span.' : '');
-  return model;
-}
-
-// ---- registry
+// ---- registry (the Matrix Analysis calculators have no Stress or 3D view: their diagrams follow the Excel programs)
 const BUILD = {
   'rc/beam-flexure': (I, R, mode) => rcBeam(I, R, mode, {}),
   'rc/shear-torsion': shearTorsion,
@@ -1316,11 +1217,7 @@ const BUILD = {
   'found/mat': mat,
   'found/pile-capacity': pileCapacity,
   'found/pile-caps': pileCaps,
-  'shared/load-transfer': loadTransfer,
-  'matrix/truss': matrixModel,
-  'matrix/beam': matrixModel,
-  'matrix/frame': matrixModel,
-  'matrix/bar': matrixModel
+  'shared/load-transfer': loadTransfer
 };
 
 export const hasViz = (id) => !!BUILD[id];

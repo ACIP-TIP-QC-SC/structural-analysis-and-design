@@ -51,6 +51,7 @@ export function frameItems(rows, members, joints, errors) {
       else its.push({ kind: 'wx', a, b, w1: v * qx, w2: w2 * qx }, { kind: 'wy', a, b, w1: v * wy, w2: w2 * wy });
       drawRow = t === 'point' ? { kind: 'py', a, P: v, dir: vert ? [0, 1] : [1, 0] } : { kind: 'wy', a, b, w1: v, w2, dir: vert ? [0, 1] : [1, 0] };
     }
+    if (drawRow.kind === 'wy' && dir !== 'local' && ld.per === 'projected') drawRow.per = 'projected';
     its.forEach((it) => { it.label = lab; });
     (items[m.id] = items[m.id] || []).push(...its);
     draw.push(Object.assign({ member: m.id }, drawRow));

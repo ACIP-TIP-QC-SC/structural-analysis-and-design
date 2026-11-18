@@ -1,31 +1,38 @@
-// UI: the model drawing shared by the Matrix Analysis calculators (hand-off 7.3): the structure to
-// scale with joints, members, supports, loads, reactions, hinges and dimensions; the result views
-// (deflected shape, axial force, shear, moment); and input on the drawing (add joints and members,
-// select, delete). Every edit goes through the workspace's onChange, so the tables stay the source.
+// UI: the model drawing shared by the Matrix Analysis calculators. It follows the diagram the Excel
+// programs draw on their tabs: the structure to scale with supports, applied loads (purple, couples
+// orange, distributed loads blue), reactions (green, "Fv1 = … kN"), node tags N# and element tags;
+// a solved truss shows tension blue, compression red and zero force grey with the words on the
+// members. The result diagrams (elastic curve, SFD, BMD, N, V, M, u) are drawn by diagrams.js.
+// Input on the drawing (add joints and members, select, delete) goes through the workspace's
+// onChange, so the tables stay the source.
 import { h, s } from '../../ui/dom.js';
-import { canvas, line, circle, poly, pline, text, rect, g, dimH, dimV } from '../../ui/drawing.js';
+import { canvas, line, circle, poly, pline, text, rect, g, dimH } from '../../ui/drawing.js';
 import { fmt } from '../../core/format.js';
 import { unitLabel } from '../../core/units.js';
 
-const W = 640, H = 430;
-const VIEWS = {
-  truss: [['model', 'Model'], ['deflected', 'Deflected shape'], ['forces', 'Member forces']],
-  beam: [['model', 'Model'], ['deflected', 'Deflected shape'], ['V', 'Shear V'], ['M', 'Moment M']],
-  frame: [['model', 'Model'], ['deflected', 'Deflected shape'], ['N', 'Axial N'], ['V', 'Shear V'], ['M', 'Moment M']],
-  bar: [['model', 'Model'], ['u', 'Displacement u'], ['N', 'Axial N']]
-};
-export const newCanvasState = (kind) => ({ kind, tool: 'select', grid: null, view: 'model', mside: kind === 'beam' ? 'tension' : 'tension', sel: null, pending: null, lock: null });
+export const W = 640, H = 430;
+export const newCanvasState = (kind) => ({ kind, tool: 'select', grid: null, mside: 'tension', sel: null, pending: null, lock: null });
 
 const finiteJ = (kind, j) => isFinite(j.x) && (kind === 'beam' || kind === 'bar' || isFinite(j.y));
-const nice = (x) => { const e = Math.pow(10, Math.floor(Math.log10(x))), m = x / e; return (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10) * e; };
+export const isLine = (kind) => kind === 'beam' || kind === 'bar';
 
-function arrowEl(x1, y1, x2, y2, cls, head = 7) {
+// Title of each drawing, as in the Excel programs (units: the display units of the forces and lengths).
+const TITLES = {
+  truss: ['Truss diagram', 'members to scale, arrows not'],
+  beam: ['Free body diagram', 'beam, supports and load positions to scale; arrow lengths not to scale'],
+  frame: ['Frame, loads and reactions', 'members to scale, arrows not'],
+  bar: ['Bar, loads and reactions', 'lengths to scale along the bar; arrows not to scale']
+};
+export function unitWords(D, sys) { return D.units === 'consistent' ? '' : unitLabel('force', sys) + ', ' + unitLabel('length_m', sys); }
+export function titleText(kind, D, sys) { const t = TITLES[kind], u = unitWords(D, sys); return t[0] + (u ? ': ' + u : '') + ' (' + t[1] + ')'; }
+
+export function arrowEl(x1, y1, x2, y2, cls, head = 7) {
   const a = Math.atan2(y2 - y1, x2 - x1), w = 0.45;
   return g(cls, line(x1, y1, x2, y2, 'mx-al'), poly([[x2, y2], [x2 - head * Math.cos(a - w), y2 - head * Math.sin(a - w)], [x2 - head * Math.cos(a + w), y2 - head * Math.sin(a + w)]], 'mx-ah'));
 }
 // Moment arc around (x, y), arrowhead at the end: counterclockwise as seen when positive.
 // (Screen y runs down, so a visually counterclockwise sweep has a decreasing screen angle.)
-function momentEl(x, y, r, ccw, cls) {
+export function momentEl(x, y, r, ccw, cls) {
   const a0 = ccw ? 0.6 * Math.PI : 0.4 * Math.PI, sg = ccw ? -1 : 1, pts = [];
   for (let k = 0; k <= 18; k++) { const t = a0 + sg * 1.5 * Math.PI * k / 18; pts.push([x + r * Math.cos(t), y + r * Math.sin(t)]); }
   const [px, py] = pts[pts.length - 1], [qx, qy] = pts[pts.length - 2];
@@ -38,7 +45,7 @@ function arrowHead(x1, y1, x2, y2, head = 7) {
 
 // Support symbol in a local frame: origin at the joint, local +y (screen) away from the structure;
 // rot = screen rotation in degrees.
-function supportEl(type, x, y, rot, opts) {
+export function supportEl(type, x, y, rot, opts) {
   const kids = [];
   const hatch = (y0, x0 = -16, x1 = 16) => { for (let u = x0; u <= x1; u += 6) kids.push(line(u, y0, u - 5, y0 + 6, 'mx-hatch')); };
   if (type === 'pin' || type === 'hinge') { kids.push(poly([[0, 0], [-10, 16], [10, 16]], 'mx-sup'), line(-17, 16, 17, 16, 'mx-gnd')); hatch(16); }
@@ -54,7 +61,7 @@ function supportEl(type, x, y, rot, opts) {
 }
 
 // Symbol and its screen rotation for a support type.
-function supportOf(kind, j, members, J) {
+export function supportOf(kind, j, J) {
   const t = j.support;
   if (!t || t === 'free') return null;
   if (kind === 'truss') {
@@ -75,7 +82,7 @@ function supportOf(kind, j, members, J) {
   }
   if (kind === 'beam' || kind === 'bar') {
     // a wall faces the beam: at the left end it stands on the left, at the right end on the right
-    const xs = [...J.values()].map((q) => q.x), left = j.x <= Math.min(...xs) + 1e-12, right = j.x >= Math.max(...xs) - 1e-12;
+    const xs = [...J.values()].map((q) => q.X), left = j.X <= Math.min(...xs) + 1e-12, right = j.X >= Math.max(...xs) - 1e-12;
     if (t === 'pin') return ['pin', 0];
     if (t === 'fixed') return ['fixed', left ? 90 : right ? -90 : 0];
     if (t === 'guided') return ['guided', left ? 90 : right ? -90 : 0];
@@ -83,272 +90,308 @@ function supportOf(kind, j, members, J) {
   return null;
 }
 
-export function drawModel(result, o, state, kind, extra) {
-  const D = (result && result.diagram) || {};
-  const svg = canvas(W, H, 'Model of the ' + kind + ' with its supports and loads', o);
-  svg.classList.add('mxc');
-  const units = D.units || 'SI', sys = o.sys, lf = units === 'US' ? 1 / 0.3048 : 1;
-  const lu = units === 'consistent' ? '' : ' ' + unitLabel('length_m', sys);
+// Screen mapping of a model, shared by the model drawing and the result diagrams (so the beam's
+// FBD, elastic curve, SFD and BMD line up). Lengths in the display unit (lf = 1/0.3048 in English).
+export function layoutOf(kind, D, state) {
+  const units = D.units || 'SI', lf = units === 'US' ? 1 / 0.3048 : 1;
   const joints = (D.joints || []).filter((j) => finiteJ(kind, j)).map((j) => Object.assign({}, j, { X: j.x * lf, Y: (j.y || 0) * lf }));
   const J = new Map(joints.map((j) => [j.id, j]));
   const members = (D.members || []).filter((m) => J.has(m.i) && J.has(m.j) && m.i !== m.j);
   // parallel bar elements between the same two nodes are drawn in lanes (screen offset in px)
-  const lane = new Map();
+  const lane = new Map(), laneNo = new Map();
   if (kind === 'bar') {
     const groups = new Map();
     members.forEach((m) => { const key = Math.min(m.i, m.j) + '-' + Math.max(m.i, m.j); if (!groups.has(key)) groups.set(key, []); groups.get(key).push(m.id); });
-    groups.forEach((ids) => ids.forEach((id, k) => lane.set(id, (k - (ids.length - 1) / 2) * 18)));
+    groups.forEach((ids) => ids.forEach((id, k) => { lane.set(id, (k - (ids.length - 1) / 2) * 18); laneNo.set(id, k); }));
   }
   const lo = (id) => lane.get(id) || 0;
-  // ---- extents
   let x0 = Math.min(...joints.map((j) => j.X)), x1 = Math.max(...joints.map((j) => j.X));
   let y0 = Math.min(...joints.map((j) => j.Y)), y1 = Math.max(...joints.map((j) => j.Y));
   if (!joints.length) { x0 = 0; x1 = 10; y0 = 0; y1 = 6; }
   const span = Math.max(x1 - x0, y1 - y0, 1e-9);
-  if (kind === 'beam' || kind === 'bar') { y0 = -0.18 * span; y1 = 0.18 * span; }
+  if (isLine(kind)) { y0 = -0.18 * span; y1 = 0.18 * span; }
   if (x1 - x0 < 0.25 * span) { const c = (x0 + x1) / 2; x0 = c - 0.125 * span; x1 = c + 0.125 * span; }
   if (y1 - y0 < 0.25 * span) { const c = (y0 + y1) / 2; y0 = c - 0.125 * span; y1 = c + 0.125 * span; }
-  const grid = state.grid || 1;
-  if (state.tool === 'joint' || state.tool === 'member') {
+  const grid = (state && state.grid) || 1;
+  if (state && (state.tool === 'joint' || state.tool === 'member')) {
     const pad = Math.max(2 * grid, 0.15 * span);
-    x0 -= pad; x1 += pad; if (kind !== 'beam' && kind !== 'bar') { y0 -= pad; y1 += pad; }
+    x0 -= pad; x1 += pad; if (!isLine(kind)) { y0 -= pad; y1 += pad; }
   }
-  if (state.lock) ({ x0, x1, y0, y1 } = state.lock);
-  const bx = 84, by = 46, bw = W - 154, bh = H - 120;
+  if (state && state.lock) ({ x0, x1, y0, y1 } = state.lock);
+  // frames and trusses keep a band on the left for the height dimension
+  const bx = isLine(kind) ? 84 : 130, by = isLine(kind) ? 64 : 80, bw = W - 2 * bx, bh = H - by - 76;
   const k = Math.min(bw / (x1 - x0), bh / (y1 - y0));
   const ox = bx + (bw - (x1 - x0) * k) / 2, oy = by + (bh - (y1 - y0) * k) / 2;
   const X = (x) => ox + (x - x0) * k, Y = (y) => oy + (y1 - y) * k;
-  svg.__mx = { X, Y, k, inv: (sx, sy) => [x0 + (sx - ox) / k, y1 - (sy - oy) / k], joints, members, lf, ext: { x0, x1, y0, y1 } };
-  const lay = { boxes: [] };
-  const free = (bx0, by0, w, hh) => !lay.boxes.some((b) => bx0 < b[0] + b[2] && bx0 + w > b[0] && by0 < b[1] + b[3] && by0 + hh > b[1]);
+  return { X, Y, k, lf, joints, J, members, lo, laneNo, span, ext: { x0, x1, y0, y1 }, inv: (sx, sy) => [x0 + (sx - ox) / k, y1 - (sy - oy) / k] };
+}
+
+// Label placement: boxes already used; a label is skipped (unless forced) when it would overlap one.
+export function labeller(lay, Wd, Hd) {
+  const hit = (bx0, by0, w, hh) => (b) => bx0 < b[0] + b[2] && bx0 + w > b[0] && by0 < b[1] + b[3] && by0 + hh > b[1];
+  const free = (bx0, by0, w, hh) => !lay.boxes.some(hit(bx0, by0, w, hh)) && !(lay.mem || []).some(hit(bx0, by0, w, hh));
   const label = (x, y, str, cls, anchor, force) => {
-    const w = str.length * 6.6 + 4, hh = 13;
+    const w = str.length * 6.6 + 4, hh = 13, minX = lay.minX || 3;
     let lx = anchor === 'end' ? x - w : anchor === 'middle' ? x - w / 2 : x;
-    // keep the label inside the canvas
-    const shift = lx < 3 ? 3 - lx : lx + w > W - 3 ? W - 3 - (lx + w) : 0;
+    const shift = lx < minX ? minX - lx : lx + w > Wd - 3 ? Wd - 3 - (lx + w) : 0;
     lx += shift; x += shift;
-    y = Math.max(12, Math.min(H - 4, y));
+    y = Math.max(12, Math.min(Hd - 4, y));
     if (!force && !free(lx, y - 10, w, hh)) return null;
     lay.boxes.push([lx, y - 10, w, hh]);
     return text(x, y, str, anchor || 'start', cls);
   };
+  return { label, free };
+}
+
+// A dark tag with white text (element tags E#) or a navy pill (node tags N#), centred on (x, y).
+export function tagEl(x, y, str, cls) {
+  const w = str.length * 6.4 + 8, hh = 15;
+  return g(cls, rect(x - w / 2, y - hh / 2, w, hh, 'mx-tagbox'), text(x, y + 3.8, str, 'middle', 'mx-tagtx'));
+}
+export const tagW = (str) => str.length * 6.4 + 8;
+
+// Vertical dimension with the label turned along the line (the band left of the structure).
+function dimVrot(x, y1, y2, label) {
+  const t = text(0, 0, label, 'middle');
+  t.setAttribute('transform', 'translate(' + (x - 6).toFixed(1) + ',' + ((y1 + y2) / 2).toFixed(1) + ') rotate(-90)');
+  return g('dimg', line(x, y1, x, y2, 'dim'), line(x - 4, y1, x + 4, y1, 'dim'), line(x - 4, y2, x + 4, y2, 'dim'), t);
+}
+
+// Dimension line along the bottom (beams and bars, as the Excel FBD): ticks at the nodes, the length
+// of each piece, and the node tags N# on the line.
+function chainDim(svg, xs, X, y, lu, lay) {
+  const pos = [...new Set(xs.map((x) => Number(x.toPrecision(12))))].sort((a, b) => a - b);
+  if (pos.length < 2) return;
+  const kids = [line(X(pos[0]), y, X(pos[pos.length - 1]), y, 'dim')];
+  pos.forEach((x) => kids.push(line(X(x), y - 6, X(x), y + 6, 'dim')));
+  for (let k = 0; k + 1 < pos.length; k++) {
+    const a = X(pos[k]), b = X(pos[k + 1]), str = fmt(pos[k + 1] - pos[k]) + lu, w = str.length * 6.6;
+    if (w <= b - a - 26) kids.push(text((a + b) / 2, y - 6, str, 'middle'));
+    else if (w <= b - a + 8) kids.push(text((a + b) / 2, y + 20, str, 'middle'));
+  }
+  lay.boxes.push([X(pos[0]) - 10, y - 18, X(pos[pos.length - 1]) - X(pos[0]) + 20, 30]);
+  svg.add(g('dimg', kids));
+}
+
+export function drawModel(result, o, state, kind) {
+  const D = (result && result.diagram) || {};
+  const svg = canvas(W, H, 'Model of the ' + kind + ' with its supports and loads', o);
+  svg.classList.add('mxc', 'mxc-' + kind);
+  const sys = o.sys, lu = D.units === 'consistent' ? '' : ' ' + unitLabel('length_m', sys);
+  const L = layoutOf(kind, D, state), { X, Y, k, joints, J, members, lo } = L;
+  svg.__mx = { X, Y, k, inv: L.inv, joints, members, lf: L.lf, ext: L.ext };
+  const lay = { boxes: [], mem: [] };
+  const { label } = labeller(lay, W, H);
+  const line1 = isLine(kind);
+  // ---- title (Excel wording)
+  const ttl = titleText(kind, D, sys);
+  svg.add(text(10, 17, ttl, 'start', 'mx-ttl'));
+  lay.boxes.push([6, 6, ttl.length * 5.9 + 8, 15]);
   // ---- grid while adding
+  const grid = state.grid || 1, { x0, x1, y0, y1 } = L.ext;
   if ((state.tool === 'joint' || state.tool === 'member') && grid > 0) {
     const nx = (x1 - x0) / grid, ny = (y1 - y0) / grid;
     if (nx < 160 && ny < 160) {
       const gl = [];
       for (let x = Math.ceil(x0 / grid) * grid; x <= x1 + 1e-9; x += grid) gl.push(line(X(x), Y(y1), X(x), Y(y0), 'mx-grid'));
-      if (kind !== 'beam' && kind !== 'bar') for (let y = Math.ceil(y0 / grid) * grid; y <= y1 + 1e-9; y += grid) gl.push(line(X(x0), Y(y), X(x1), Y(y), 'mx-grid'));
+      if (!line1) for (let y = Math.ceil(y0 / grid) * grid; y <= y1 + 1e-9; y += grid) gl.push(line(X(x0), Y(y), X(x1), Y(y), 'mx-grid'));
       svg.add(g('mx-gridg', gl));
     }
   }
   if (!joints.length) { svg.add(text(W / 2, H / 2, state.tool === 'joint' ? 'Click to place the first joint.' : 'Add joints in the table or with Add joint.', 'middle', 'mx-hint')); return svg; }
+  const solved = !!(result && result.ok && D.res);
+  const pass = solved && result.verdict && result.verdict.pass;
+  const R = solved ? new Map(D.res.map((m) => [m.id, m])) : new Map();
   // ---- dimensions
-  if (o.show.dim !== false && joints.length > 1) {
+  const dims = o.show.dim !== false && joints.length > 1;
+  if (dims) {
     const jx0 = Math.min(...joints.map((j) => j.X)), jx1 = Math.max(...joints.map((j) => j.X)), jy0 = Math.min(...joints.map((j) => j.Y)), jy1 = Math.max(...joints.map((j) => j.Y));
-    if (jx1 > jx0) svg.add(dimH(X(jx0), X(jx1), H - 22, fmt(jx1 - jx0) + lu));
-    if (jy1 > jy0 && kind !== 'beam' && kind !== 'bar') {
-      const str = fmt(jy1 - jy0) + lu, lw = str.length * 6.6 + 8;
-      svg.add(dimV(Math.max(lw + 8, Math.min(X(jx0) - 30, 70)), Y(jy1), Y(jy0), str));
+    if (line1) chainDim(svg, joints.map((j) => j.X), X, H - 34, lu, lay);
+    else {
+      if (jx1 > jx0) svg.add(dimH(X(jx0), X(jx1), H - 22, fmt(jx1 - jx0) + lu));
+      // the height: a band at the far left, clear of the members, loads and reactions
+      if (jy1 > jy0) { svg.add(dimVrot(24, Y(jy1), Y(jy0), fmt(jy1 - jy0) + lu)); lay.minX = 34; }
     }
   }
   // joints and support symbols keep labels clear of them
   joints.forEach((j) => { lay.boxes.push([X(j.X) - 10, Y(j.Y) - 10, 20, 20]); if (j.support && j.support !== 'free') lay.boxes.push([X(j.X) - 18, Y(j.Y), 36, 24]); });
-  const solved = result && result.ok && D.res;
-  const R = solved ? new Map(D.res.map((m) => [m.id, m])) : new Map();
-  const view = solved && result.verdict && result.verdict.pass ? state.view : 'model';
-  // ---- members
-  const nMax = solved && D.res[0].N != null ? Math.max(...D.res.map((m) => Math.abs(m.N || 0))) : 0;
+  // ---- members (a solved truss: tension blue, compression red, zero force grey)
+  const nMax = solved && kind === 'truss' ? Math.max(...D.res.map((m) => Math.abs(m.N || 0))) : 0;
+  const tc = (m) => { const r = R.get(m.id); if (!r || kind !== 'truss') return null; return Math.abs(r.N) <= 1e-6 * nMax ? 'zero' : r.N > 0 ? 'T' : 'C'; };
   const memG = [];
   members.forEach((m) => {
-    const a = J.get(m.i), b = J.get(m.j);
-    let cls = 'mx-mem';
-    if (view === 'forces' && R.has(m.id)) { const N = R.get(m.id).N; cls = Math.abs(N) <= 1e-6 * nMax ? 'mx-mem mx-zero' : N > 0 ? 'mx-mem mx-ten' : 'mx-mem mx-com'; }
-    if (view === 'deflected' || ['N', 'V', 'M', 'u'].includes(view)) cls = 'mx-mem mx-orig';
+    const a = J.get(m.i), b = J.get(m.j), st = tc(m);
+    const cls = 'mx-mem' + (line1 ? ' mx-thick' : '') + (st === 'T' ? ' mx-ten' : st === 'C' ? ' mx-com' : st === 'zero' ? ' mx-zero' : '');
     const dl = lo(m.id);
     if (state.sel && state.sel.type === 'member' && state.sel.id === m.id) memG.push(line(X(a.X), Y(a.Y) + dl, X(b.X), Y(b.Y) + dl, 'mx-selm'));
     memG.push(line(X(a.X), Y(a.Y) + dl, X(b.X), Y(b.Y) + dl, cls));
     if (dl) memG.push(line(X(a.X), Y(a.Y), X(a.X), Y(a.Y) + dl, 'mx-mem'), line(X(b.X), Y(b.Y), X(b.X), Y(b.Y) + dl, 'mx-mem'));
+    // the member line keeps labels off it (sampled boxes)
+    const n = Math.max(1, Math.round(Math.hypot(X(b.X) - X(a.X), Y(b.Y) - Y(a.Y)) / 14));
+    for (let q = 1; q < n; q++) { const px = X(a.X) + (X(b.X) - X(a.X)) * q / n, py = Y(a.Y) + (Y(b.Y) - Y(a.Y)) * q / n + dl; lay.mem.push([px - 3, py - 3, 6, 6]); }
   });
   svg.add(g('mx-members', memG));
-  // ---- result overlays
-  if (solved && view === 'deflected') drawDeflected(svg, D, J, X, Y, lf, k, span);
-  if (solved && ['N', 'V', 'M', 'u'].includes(view)) drawDiagram(svg, D, J, X, Y, view, state, label, o, kind, lo);
-  // ---- member numbers and hinges (model view)
-  if (view === 'model') {
-    members.forEach((m) => {
-      const a = J.get(m.i), b = J.get(m.j), mx = (X(a.X) + X(b.X)) / 2, my = (Y(a.Y) + Y(b.Y)) / 2 + lo(m.id);
-      const str = String(m.id), w = str.length * 7 + 8;
-      lay.boxes.push([mx - w / 2, my - 8, w, 16]);
-      svg.add(g('mx-mnum', rect(mx - w / 2, my - 8, w, 16, 'mx-mbox'), text(mx, my + 4, str, 'middle', 'mx-mtx')));
-    });
-  }
+  // ---- hinges (member end releases)
   members.forEach((m) => {
     const rel = m.release || 'none';
     if (rel === 'none') return;
-    const a = J.get(m.i), b = J.get(m.j), dx = X(b.X) - X(a.X), dy = Y(b.Y) - Y(a.Y), L = Math.hypot(dx, dy) || 1;
-    if (rel === 'i' || rel === 'both') svg.add(circle(X(a.X) + dx / L * 11, Y(a.Y) + dy / L * 11, 4.5, 'mx-hinge'));
-    if (rel === 'j' || rel === 'both') svg.add(circle(X(b.X) - dx / L * 11, Y(b.Y) - dy / L * 11, 4.5, 'mx-hinge'));
+    const a = J.get(m.i), b = J.get(m.j), dx = X(b.X) - X(a.X), dy = Y(b.Y) - Y(a.Y), Ln = Math.hypot(dx, dy) || 1;
+    if (rel === 'i' || rel === 'both') svg.add(circle(X(a.X) + dx / Ln * 11, Y(a.Y) + dy / Ln * 11, 5, 'mx-hinge'));
+    if (rel === 'j' || rel === 'both') svg.add(circle(X(b.X) - dx / Ln * 11, Y(b.Y) - dy / Ln * 11, 5, 'mx-hinge'));
   });
   // ---- supports
   joints.forEach((j) => {
-    const sp = supportOf(kind, j, members, J);
-    if (sp) svg.add(supportEl(sp[0], X(j.X), Y(j.Y), sp[1], { title: 'Joint ' + j.id }));
+    const sp = supportOf(kind, j, J);
+    if (sp) svg.add(supportEl(sp[0], X(j.X), Y(j.Y), sp[1], { title: (kind === 'bar' ? 'Node ' : 'Joint ') + j.id }));
     if (D.clamps && D.clamps.includes(j.id)) svg.add(supportEl('clamp', X(j.X), Y(j.Y) - 14, 0, { title: 'Imaginary clamp at joint ' + j.id }));
   });
-  // ---- member loads (true direction), joint loads and reactions
-  if (o.show.loads !== false && (view === 'model' || view === 'forces')) {
-    drawMemberLoads(svg, { D, J, X, Y, k, label, o, members, lo });
+  // ---- element tags of beams and bars: below the beam at mid-length (Excel FBD)
+  if (line1) members.forEach((m) => {
+    const a = J.get(m.i), b = J.get(m.j), mx = (X(a.X) + X(b.X)) / 2, my = Y(0) + lo(m.id) + (lo(m.id) < 0 ? -16 : 16);
+    const str = kind === 'bar' ? '[' + m.id + ']' : 'E' + m.id;
+    svg.add(tagEl(mx, my, str, 'mx-etag'));
+    lay.boxes.push([mx - tagW(str) / 2, my - 8, tagW(str), 16]);
+  });
+  // ---- member loads (true direction), joint loads, reactions and support movements
+  if (o.show.loads !== false) {
+    drawMemberLoads(svg, { D, J, X, Y, k, label, o, members, lo, lay });
     joints.forEach((j) => {
-      const fx = j.FX || 0, fy = j.FY || 0, mz = j.M || 0;
-      if (fx && kind === 'bar') { const d = Math.sign(fx), yy = Y(j.Y) - 26; svg.add(arrowEl(X(j.X) - d * 40, yy, X(j.X) - d * 4, yy, 'mx-pt'), line(X(j.X), yy, X(j.X), Y(j.Y) - 9, 'mx-lead')); const el = label(X(j.X) - d * 42, yy - 6, fmtForce(Math.abs(fx), D, o), 'mx-ptx', d > 0 ? 'end' : 'start', true); if (el) svg.add(el); }
-      else if (fx) { const d = Math.sign(fx); svg.add(arrowEl(X(j.X) - d * 44, Y(j.Y), X(j.X) - d * 8, Y(j.Y), 'mx-pt')); const el = label(X(j.X) - d * 46, Y(j.Y) - 6, fmtForce(Math.abs(fx), D, o), 'mx-ptx', d > 0 ? 'end' : 'start', true); if (el) svg.add(el); }
-      if (fy) { const d = Math.sign(fy); svg.add(arrowEl(X(j.X), Y(j.Y) + d * 44, X(j.X), Y(j.Y) + d * 8, 'mx-pt')); const el = label(X(j.X) + 6, Y(j.Y) + d * 40 + (d > 0 ? 8 : 0), fmtForce(Math.abs(fy), D, o), 'mx-ptx', 'start', true); if (el) svg.add(el); }
-      if (mz) { svg.add(momentEl(X(j.X), Y(j.Y), 17, mz > 0, 'mx-mo')); const el = label(X(j.X) + 18, Y(j.Y) - 18, fmtMoment(Math.abs(mz), D, o) + (mz > 0 ? ' ccw' : ' cw'), 'mx-motx', 'start', true); if (el) svg.add(el); }
+      const fx = j.FX || 0, fy = j.FY || 0, mz = j.M || 0, x = X(j.X), y = Y(j.Y);
+      if (fx && kind === 'bar') { const d = Math.sign(fx), yy = y - 30; svg.add(arrowEl(x - d * 44, yy, x - d * 4, yy, 'mx-pt'), line(x, yy, x, y - 9, 'mx-lead')); const el = label(x - d * 46, yy - 6, fmtForce(Math.abs(fx), D, o), 'mx-ptx', d > 0 ? 'end' : 'start', true); if (el) svg.add(el); }
+      else if (fx) { const d = Math.sign(fx); svg.add(arrowEl(x - d * 44, y, x - d * 8, y, 'mx-pt')); lay.boxes.push([Math.min(x, x - d * 44), y - 4, 44, 8]); const el = label(x - d * 46, y - 6, fmtForce(Math.abs(fx), D, o), 'mx-ptx', d > 0 ? 'end' : 'start', true); if (el) svg.add(el); }
+      if (fy) { const d = Math.sign(fy); svg.add(arrowEl(x, y + d * 44, x, y + d * 8, 'mx-pt')); lay.boxes.push([x - 4, Math.min(y, y + d * 44), 8, 44]); const el = label(x + 6, y + d * 40 + (d > 0 ? 8 : 0), fmtForce(Math.abs(fy), D, o), 'mx-ptx', 'start', true); if (el) svg.add(el); }
+      if (mz) { svg.add(momentEl(x, y, 17, mz > 0, 'mx-mo')); const el = label(x + 18, y - 18, fmtMoment(Math.abs(mz), D, o), 'mx-motx', 'start', true); if (el) svg.add(el); }
     });
   }
-  if (solved && o.show.reactions !== false && (view === 'model' || view === 'forces')) drawReactions(svg, D, J, X, Y, label, o, kind);
-  if (solved && view === 'forces') {
-    D.res.forEach((m) => {
-      const a = J.get(m.i), b = J.get(m.j);
-      if (!a || !b) return;
-      const st = Math.abs(m.N) <= 1e-6 * nMax ? 'zero' : m.N > 0 ? 'T' : 'C';
-      const str = st === 'zero' ? '0' : fmtForce(Math.abs(m.N), D, o) + ' (' + st + ')';
-      const dx = X(b.X) - X(a.X), dy = Y(b.Y) - Y(a.Y), L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
-      for (const t of [0.5, 0.35, 0.65, 0.25, 0.75]) {
-        let done = false;
-        for (const sd of [1, -1]) {
-          const px = X(a.X) + dx * t + nx * 11 * sd, py = Y(a.Y) + dy * t + ny * 11 * sd + 4;
-          const el = label(px, py, str, 'mx-ntx mx-' + st, 'middle');
-          if (el) { svg.add(el); done = true; break; }
-        }
-        if (done) break;
-      }
-    });
-  }
-  // ---- joints
+  if (solved && o.show.reactions !== false) drawReactions(svg, D, J, X, Y, label, o, kind);
+  if (solved) drawMovements(svg, D, J, X, Y, label, o, kind);
+  // ---- truss: element tag E# with the state word along the member (Excel); frame: M# beside the member
+  if (kind === 'truss') members.forEach((m) => trussTag(svg, m, J.get(m.i), J.get(m.j), X, Y, tc(m), lay));
+  if (kind === 'frame') members.forEach((m) => {
+    const a = J.get(m.i), b = J.get(m.j), dx = X(b.X) - X(a.X), dy = Y(b.Y) - Y(a.Y), Ln = Math.hypot(dx, dy) || 1, nx = -dy / Ln, ny = dx / Ln;
+    const str = 'M' + m.id;
+    for (const t of [0.5, 0.38, 0.62, 0.28, 0.72, 0.2, 0.8]) {
+      let el = null;
+      for (const sd of [1, -1]) { el = label(X(a.X) + dx * t + nx * 14 * sd, Y(a.Y) + dy * t + ny * 14 * sd + 4, str, 'mx-mlab', 'middle'); if (el) break; }
+      if (el) { svg.add(el); break; }
+    }
+  });
+  // ---- joints: navy node tags (beams and bars: small dots, the tags sit on the dimension line)
   joints.forEach((j) => {
     const on = state.sel && state.sel.type === 'joint' && state.sel.id === j.id, pend = state.pending === j.id;
-    svg.add(g('mx-jg', circle(X(j.X), Y(j.Y), 8, 'mx-jt' + (on || pend ? ' mx-jton' : '')), text(X(j.X), Y(j.Y) + 3.5, String(j.id), 'middle', 'mx-jtx')));
-    lay.boxes.push([X(j.X) - 9, Y(j.Y) - 9, 18, 18]);
+    const x = X(j.X), y = Y(j.Y), str = 'N' + j.id;
+    if (line1) {
+      svg.add(circle(x, y, on || pend ? 7 : 3.2, 'mx-jdot' + (on || pend ? ' mx-jton' : '')));
+      if (dims) svg.add(tagEl(x, H - 34, str, 'mx-ntag'));
+      else svg.add(tagEl(x, y - 16, str, 'mx-ntag'));
+    } else {
+      if (on || pend) svg.add(circle(x, y, 13, 'mx-jring'));
+      svg.add(g('mx-jg', tagEl(x, y, str, 'mx-ntag')));
+    }
   });
   // ---- validation marks and the mechanism
   const marks = D.marks || { joints: [], members: [] };
   marks.joints.forEach((id) => { const j = J.get(id); if (j) svg.add(circle(X(j.X), Y(j.Y), 14, 'mx-bad')); });
   marks.members.forEach((id) => { const m = members.find((x) => x.id === id); if (!m) return; const a = J.get(m.i), b = J.get(m.j); svg.add(circle((X(a.X) + X(b.X)) / 2, (Y(a.Y) + Y(b.Y)) / 2, 13, 'mx-bad')); });
   if (D.unstable) { const j = J.get(D.unstable.joint); if (j) svg.add(text(X(j.X) + 16, Y(j.Y) - 14, 'mechanism at ' + D.unstable.name, 'start', 'mx-badtx')); }
-  if (view !== state.view && state.view !== 'model' && result && result.ok && !(result.verdict && result.verdict.pass)) svg.add(text(W / 2, 20, 'The diagrams are not drawn: an equilibrium check failed.', 'middle', 'mx-badtx'));
+  if (solved && !pass) svg.add(text(W / 2, 36, 'An equilibrium check failed: check the inputs.', 'middle', 'mx-badtx'));
   return svg;
+}
+
+// Truss element tag: "E#" in a dark box and the state word (tension, compression, zero force; T, C, 0
+// when the member is short), turned along the member and slid along it to a free spot (Excel).
+function trussTag(svg, m, a, b, X, Y, st, lay) {
+  const ax = X(a.X), ay = Y(a.Y), bx = X(b.X), by = Y(b.Y), Ls = Math.hypot(bx - ax, by - ay);
+  if (!(Ls > 0)) return;
+  let ang = Math.atan2(by - ay, bx - ax) * 180 / Math.PI;
+  if (ang > 90) ang -= 180; if (ang <= -90) ang += 180;
+  const tag = 'E' + m.id, long = st === 'T' ? 'tension' : st === 'C' ? 'compression' : st === 'zero' ? 'zero force' : '';
+  const word = long && tagW(tag) + long.length * 6.2 + 30 <= Ls ? long : long ? { T: 'T', C: 'C', zero: '0' }[st] : '';
+  const wTag = tagW(tag), wWord = word ? word.length * 6.2 + 6 : 0, wAll = wTag + wWord;
+  const rad = ang * Math.PI / 180, ca = Math.cos(rad), sa = Math.sin(rad);
+  const box = (cx, cy) => { const hw = Math.abs(ca) * wAll / 2 + Math.abs(sa) * 8, hh = Math.abs(sa) * wAll / 2 + Math.abs(ca) * 8; return [cx - hw, cy - hh, 2 * hw, 2 * hh]; };
+  let pick = null;
+  for (const t of [0.5, 0.38, 0.62, 0.28, 0.72, 0.2, 0.8]) {
+    const cx = ax + (bx - ax) * t, cy = ay + (by - ay) * t, bb = box(cx, cy);
+    // the tag sits on its member, so only labels, loads and other tags count (not lay.mem)
+    if (!lay.boxes.some((q) => bb[0] < q[0] + q[2] && bb[0] + bb[2] > q[0] && bb[1] < q[1] + q[3] && bb[1] + bb[3] > q[1])) { pick = [cx, cy, bb]; break; }
+  }
+  if (!pick) { const cx = (ax + bx) / 2, cy = (ay + by) / 2; pick = [cx, cy, box(cx, cy)]; }
+  const kids = [rect(-wAll / 2, -7.5, wTag, 15, 'mx-tagbox'), text(-wAll / 2 + wTag / 2, 3.8, tag, 'middle', 'mx-tagtx')];
+  if (word) kids.push(rect(-wAll / 2 + wTag, -7.5, wWord, 15, 'mx-wordbox'), text(-wAll / 2 + wTag + 3, 3.8, word, 'start', 'mx-word mx-' + st));
+  const el = g('mx-etag mx-ttag', kids);
+  el.setAttribute('transform', 'translate(' + pick[0].toFixed(1) + ',' + pick[1].toFixed(1) + ') rotate(' + ang.toFixed(2) + ')');
+  svg.add(el);
+  lay.boxes.push(pick[2]);
 }
 
 export function fmtForce(x, D, o) { return D.units === 'consistent' ? fmt(x) : o.fq(x, 'force'); }
 export function fmtMoment(x, D, o) { return D.units === 'consistent' ? fmt(x) : o.fq(x, 'moment'); }
+export function fmtDisp(x, D, o) { return D.units === 'consistent' ? fmt(x) : o.fq(x * 1000, 'disp'); }
 
+// Reactions in green with their names: "Fh1 = 15 kN", "M1 = 26.4 kN·m" (absolute value; the arrow
+// or the arc shows the direction), "Fn3 = …" normal to an inclined surface.
 function drawReactions(svg, D, J, X, Y, label, o, kind) {
   (D.reactions || []).forEach((r) => {
     const j = J.get(r.joint);
     if (!j || !r.value || r.clamp) return;
     const x = X(j.X), y = Y(j.Y), d = Math.sign(r.value);
+    const nm = r.name + ' = ';
     let el = null;
-    if (/^Fh\d/.test(r.name) && !r.incl) { svg.add(arrowEl(x - d * 70, y + 10, x - d * 26, y + 10, 'mx-rx')); el = label(x - d * 72, y + 24, fmtForce(Math.abs(r.value), D, o), 'mx-rxtx', d > 0 ? 'end' : 'start', true); }
+    if (/^Fh\d/.test(r.name) && !r.incl) { svg.add(arrowEl(x - d * 70, y + 10, x - d * 26, y + 10, 'mx-rx')); el = label(x - d * 24, y + 38, nm + fmtForce(Math.abs(r.value), D, o), 'mx-rxtx', d > 0 ? 'end' : 'start', true); }
     else if ((/^Fv\d/.test(r.name) || /^F\d/.test(r.name)) && !r.incl) {
-      if (/^F\d/.test(r.name)) { svg.add(arrowEl(x - d * 70, y + 30, x - d * 26, y + 30, 'mx-rx')); el = label(x - d * 72, y + 44, fmtForce(Math.abs(r.value), D, o), 'mx-rxtx', d > 0 ? 'end' : 'start', true); }
-      else { svg.add(arrowEl(x, y + d * 74, x, y + d * 30, 'mx-rx')); el = label(x + 6, y + (d > 0 ? 70 : -60), fmtForce(Math.abs(r.value), D, o), 'mx-rxtx', 'start', true); }
+      if (/^F\d/.test(r.name)) { svg.add(arrowEl(x - d * 70, y + 30, x - d * 26, y + 30, 'mx-rx')); el = label(x - d * 48, y + 46, nm + fmtForce(Math.abs(r.value), D, o), 'mx-rxtx', 'middle', true); }
+      else {
+        svg.add(arrowEl(x, y + d * 74, x, y + d * 30, 'mx-rx'));
+        const str = nm + fmtForce(Math.abs(r.value), D, o), right = x + 6 + str.length * 6.6 + 4 <= W - 3;
+        el = label(right ? x + 6 : x - 6, y + (d > 0 ? 70 : -60), str, 'mx-rxtx', right ? 'start' : 'end', true);
+      }
     } else if (r.normal) {
       const inc = (D.incl || []).find((q) => q.id === r.joint), th = (inc ? inc.angle : 0) * Math.PI / 180;
       const nx = -Math.sin(th) * d, ny = -Math.cos(th) * d;      // screen direction of +n
       svg.add(arrowEl(x - nx * 74, y - ny * 74, x - nx * 30, y - ny * 30, 'mx-rx'));
-      el = label(x - nx * 78 + 4, y - ny * 78, 'Fn = ' + fmtForce(Math.abs(r.value), D, o), 'mx-rxtx', 'start', true);
-    } else if (/^M\d/.test(r.name)) { svg.add(momentEl(x, y, 24, r.value > 0, 'mx-rx')); el = label(x - 26, y - 26, fmtMoment(Math.abs(r.value), D, o) + (r.value > 0 ? ' ccw' : ' cw'), 'mx-rxtx', 'end', true); }
-    if (el) svg.add(el);
-  });
-}
-
-function drawDeflected(svg, D, J, X, Y, lf, k, span) {
-  let dmax = 0;
-  D.res.forEach((m) => m.st.dx.forEach((dx, q) => { dmax = Math.max(dmax, Math.hypot(dx, m.st.dy[q])); }));
-  if (!(dmax > 0)) { svg.add(text(W / 2, 22, 'No movement: every joint is held.', 'middle', 'mx-hint')); return; }
-  const scale = nice(0.1 * span / (dmax * lf));
-  D.res.forEach((m) => {
-    const a = J.get(m.i);
-    if (!a) return;
-    const pts = m.st.x.map((x, q) => [X(a.X + (m.c * x + scale * m.st.dx[q]) * lf), Y(a.Y + (m.s * x + scale * m.st.dy[q]) * lf)]);
-    svg.add(pline(pts, 'mx-defl'));
-  });
-  D.ids.forEach((id) => {
-    const j = J.get(id), q = D.dofNames.findIndex((nm, kk) => D.dofJoint[kk] === id);
-    if (!j) return;
-    const ux = D.kind === 'beam' ? 0 : D.U[q], uy = D.kind === 'beam' ? D.U[q] : D.kind === 'bar' ? 0 : D.U[q + 1];
-    svg.add(circle(X(j.X + scale * ux * lf), Y(j.Y + scale * uy * lf), 3.5, 'mx-dj'));
-  });
-  svg.add(text(W - 12, 22, 'Deflections × ' + fmt(scale), 'end', 'mx-scale'));
-}
-
-// N, V or M along the members, drawn perpendicular to each member, with end and extreme values.
-function drawDiagram(svg, D, J, X, Y, view, state, label, o, kind, lo) {
-  const laneOf = lo || (() => 0);
-  const key = view;
-  let vmax = 0;
-  D.res.forEach((m) => m.st[key].forEach((x) => { vmax = Math.max(vmax, Math.abs(x)); }));
-  if (!(vmax > 0)) { svg.add(text(W / 2, 22, (view === 'N' ? 'Axial force' : view === 'V' ? 'Shear' : view === 'u' ? 'Displacement' : 'Moment') + ' is zero everywhere.', 'middle', 'mx-hint')); return; }
-  const sc = (kind === 'beam' || kind === 'bar' ? 75 : 42) / vmax;
-  // the caption first, so value labels keep clear of it
-  const cap = label(W - 12, 22, view === 'M' ? 'M drawn on the ' + (state.mside === 'compression' ? 'compression' : 'tension') + ' side' : view === 'N' ? 'N: tension +' : view === 'u' ? 'u: + to the right' : 'V: + left face up', 'mx-scale', 'end', true);
-  if (cap) svg.add(cap);
-  // sign of the offset along local +y: N and V positive on +y; M on the tension side (sagging + -> −y)
-  const flip = view === 'M' ? (state.mside === 'compression' ? 1 : -1) : 1;
-  const lbls = [];
-  D.res.forEach((m) => {
-    const a = J.get(m.i);
-    if (!a) return;
-    const st = m.st, n = st.x.length - 1;
-    const dl = laneOf(m.id);
-    const base = (x) => [X(a.X + m.c * x * (D.units === 'US' ? 1 / 0.3048 : 1)), Y(a.Y + m.s * x * (D.units === 'US' ? 1 / 0.3048 : 1)) + dl];
-    const nx = -m.s, ny = -m.c;          // screen direction of local +y
-    const pt = (q) => { const [bx, by] = base(st.x[q]); const off = flip * st[key][q] * sc; return [bx + nx * off, by + ny * off]; };
-    // filled runs of one sign
-    let run = [], sgn = 0;
-    const flush = () => { if (run.length > 1) { const [b0x, b0y] = base(run[0][0]), [b1x, b1y] = base(run[run.length - 1][0]); svg.add(poly([[b0x, b0y]].concat(run.map((r) => r[1]), [[b1x, b1y]]), sgn > 0 ? 'mx-posf' : 'mx-negf')); } run = []; };
-    for (let q = 0; q <= n; q++) {
-      const val = st[key][q], sg = val > 0 ? 1 : val < 0 ? -1 : 0;
-      if (sg && sgn && sg !== sgn) {
-        // zero crossing between q-1 and q
-        const v0 = st[key][q - 1], x0 = st.x[q - 1], x1 = st.x[q], xc = x0 + (x1 - x0) * v0 / (v0 - val);
-        run.push([xc, base(xc)]); flush(); run.push([xc, base(xc)]);
-      }
-      if (sg) sgn = sg;
-      run.push([st.x[q], pt(q)]);
+      el = label(x - nx * 78 + 4, y - ny * 78, nm + fmtForce(Math.abs(r.value), D, o), 'mx-rxtx', 'start', true);
+      const a2 = label(x + 22, y + 34, 'incline ' + fmt(inc ? inc.angle : 0) + '°', 'mx-scale', 'start');
+      if (a2) svg.add(a2);
+    } else if (/^M\d/.test(r.name)) {
+      svg.add(momentEl(x, y, 24, r.value > 0, 'mx-rx'));
+      const str = nm + fmtMoment(Math.abs(r.value), D, o);
+      el = label(x - 28, y - 28, str, 'mx-rxtx', 'end') || label(x + 28, y - 28, str, 'mx-rxtx', 'start') || label(x - 28, y - 28, str, 'mx-rxtx', 'end', true);
     }
-    flush();
-    svg.add(pline(st.x.map((x, q) => pt(q)), 'mx-dline'));
-    // labels: extremes first, then the ends
-    const ex = st.ext, cand = [];
-    if (key === 'M') { cand.push(ex.Mmax, ex.Mmin); } else if (key === 'N') { cand.push(ex.Nmax, ex.Nmin); }
-    else if (key === 'u') { let hi = 0, lo2 = 0; st.u.forEach((x, q) => { if (x > st.u[hi]) hi = q; if (x < st.u[lo2]) lo2 = q; }); cand.push({ v: st.u[hi], x: st.x[hi] }, { v: st.u[lo2], x: st.x[lo2] }); }
-    else cand.push(ex.Vabs);
-    cand.forEach((e) => { if (e && Math.abs(e.v) > 1e-9 * vmax) lbls.push({ p: 2, x: e.x, v: e.v, m, base, nx, ny }); });
-    [0, n].forEach((q) => { if (Math.abs(st[key][q]) > 1e-9 * vmax) lbls.push({ p: 1, x: st.x[q], v: st[key][q], m, base, nx, ny }); });
-  });
-  lbls.sort((p, q) => q.p - p.p).forEach((l) => {
-    const [bx, by] = l.base(l.x), off = flip * l.v * sc;
-    const tx = bx + l.nx * (off + Math.sign(off || 1) * 10), ty = by + l.ny * (off + Math.sign(off || 1) * 10) + 4;
-    const str = key === 'M' ? fmtMoment(l.v, D, o) : key === 'u' ? (D.units === 'consistent' ? fmt(l.v) : o.fq(l.v * 1000, 'disp')) : fmtForce(l.v, D, o);
-    const el = label(tx, ty, str.replace('-', '−'), 'mx-dtx', 'middle');
     if (el) svg.add(el);
+  });
+}
+
+// Prescribed support movements next to the support: "Uv2 = −10 mm (settlement)", "D1 = 0.002 rad
+// (imposed rotation)" (Excel FBD notes).
+function drawMovements(svg, D, J, X, Y, label, o, kind) {
+  (D.dofNames || []).forEach((nm, q) => {
+    if (!D.held || !D.held[q] || !D.Us || !D.Us[q]) return;
+    const j = J.get(D.dofJoint[q]);
+    if (!j) return;
+    const rot = /^D\d/.test(nm), v = D.Us[q];
+    const str = nm + ' = ' + (rot ? fmt(v) + ' rad (imposed rotation)' : fmtDisp(v, D, o) + (kind === 'bar' ? ' (support moved)' : ' (settlement)'));
+    for (const [dx, dy, an] of [[0, 46, 'middle'], [22, -22, 'start'], [-22, -22, 'end'], [0, 60, 'middle']]) {
+      const el = label(X(j.X) + dx, Y(j.Y) + dy, str, 'mx-movtx', an);
+      if (el) { svg.add(el); break; }
+    }
   });
 }
 
 // Member loads in their true direction (beams and frames). D.loads rows: local item fields (kind
 // wy/wx distributed, py/px point, m couple; a, b along the member from b) plus dir = the global
-// direction [x, y] of a positive value.
+// direction [x, y] of a positive value. Labels as the Excel programs: "|P| kN", "|w1| to |w2| kN/m",
+// "(projected)", "|M| kN·m"; the arrows show the direction.
 export function drawMemberLoads(svg, c) {
-  const { D, J, X, Y, label, o } = c, laneOf = c.lo || (() => 0);
+  const { D, J, X, Y, label, o } = c, laneOf = c.lo || (() => 0), lay = c.lay || { boxes: [] };
   const rows = D.loads || [];
   if (!rows.length) return;
   const lf = D.units === 'US' ? 1 / 0.3048 : 1;
   const wmax = Math.max(1e-30, ...rows.filter((r) => r.kind === 'wy' || r.kind === 'wx').flatMap((r) => [Math.abs(r.w1), Math.abs(r.w2)]));
   const mem = new Map((D.members || []).map((m) => [m.id, m]));
-  const cls = D.units === 'consistent' ? (x) => fmt(x) : (x) => o.fq(x, 'lineload');
+  const fw = D.units === 'consistent' ? (x) => fmt(x) : (x) => o.fq(x, 'lineload');
+  const num = D.units === 'consistent' ? (x) => fmt(x) : (x) => o.fq(x, 'lineload', false);
+  const box = (pts) => { const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]); lay.boxes.push([Math.min(...xs) - 2, Math.min(...ys) - 2, Math.max(...xs) - Math.min(...xs) + 4, Math.max(...ys) - Math.min(...ys) + 4]); };
   rows.forEach((r) => {
     const m = mem.get(r.member), a = m && J.get(m.i), b = m && J.get(m.j);
     if (!a || !b) return;
@@ -362,35 +405,43 @@ export function drawMemberLoads(svg, c) {
     if (r.kind === 'wy' || r.kind === 'wx') {
       const [ax, ay] = at(r.a), [bx, by] = at(r.b), len = Math.hypot(bx - ax, by - ay);
       const n = Math.max(2, Math.min(24, Math.round(len / 16)));
-      const tails = [];
+      const tails = [], heads = [];
       for (let k = 0; k <= n; k++) {
         const t = k / n, w = r.w1 + (r.w2 - r.w1) * t, l = 8 + 24 * Math.abs(w) / wmax, sg = w >= 0 ? 1 : -1;
         const px = ax + (bx - ax) * t, py = ay + (by - ay) * t;
         // the arrow points along the load; its tail sits on the side the load comes from
         const tx = px - ds[0] * sg * l, ty = py - ds[1] * sg * l;
-        tails.push([tx, ty]);
+        tails.push([tx, ty]); heads.push([px, py]);
         if (Math.abs(w) > 1e-12 * wmax) svg.add(arrowEl(tx, ty, px - ds[0] * sg * 2, py - ds[1] * sg * 2, 'mx-ds', 5));
       }
       svg.add(pline(tails, 'mx-dsl'));
-      const e1 = label(tails[0][0], tails[0][1] - 4, cls(Math.abs(r.w1)), 'mx-dstx', 'middle');
-      if (e1) svg.add(e1);
-      if (Math.abs(r.w2 - r.w1) > 1e-9 * wmax) { const e2 = label(tails[n][0], tails[n][1] - 4, cls(Math.abs(r.w2)), 'mx-dstx', 'middle'); if (e2) svg.add(e2); }
+      box(tails.concat(heads));
+      const same = Math.abs(r.w2 - r.w1) <= 1e-9 * wmax;
+      const str = (same ? fw(Math.abs(r.w1)) : num(Math.abs(r.w1)) + ' to ' + fw(Math.abs(r.w2))) + (r.per === 'projected' ? ' (projected)' : '');
+      // the label beyond the arrow tails, at the middle of the band
+      const mid = tails[Math.round(n / 2)], away = [-ds[0], -ds[1]];
+      const lx = mid[0] + away[0] * 10, ly = mid[1] + away[1] * 10 + (away[1] > 0.5 ? 10 : away[1] < -0.5 ? -2 : 4);
+      const el = label(lx, ly, str, 'mx-dstx', Math.abs(away[0]) > 0.5 ? (away[0] > 0 ? 'start' : 'end') : 'middle')
+        || label(tails[0][0], tails[0][1] - 6, str, 'mx-dstx', 'middle', true);
+      if (el) svg.add(el);
     } else if (r.kind === 'py' || r.kind === 'px') {
-      const [px, py] = at(r.a), sg = r.P >= 0 ? 1 : -1;
-      svg.add(arrowEl(px - ds[0] * sg * 44, py - ds[1] * sg * 44, px - ds[0] * sg * 3, py - ds[1] * sg * 3, 'mx-pt'));
-      const el = label(px - ds[0] * sg * 46 + 4, py - ds[1] * sg * 46, fmtForce(Math.abs(r.P), D, o), 'mx-ptx', 'start');
+      const [px, py] = at(r.a), sg = r.P >= 0 ? 1 : -1, tx = px - ds[0] * sg * 44, ty = py - ds[1] * sg * 44;
+      svg.add(arrowEl(tx, ty, px - ds[0] * sg * 3, py - ds[1] * sg * 3, 'mx-pt'));
+      box([[tx, ty], [px, py]]);
+      const el = label(px - ds[0] * sg * 46 + 4, py - ds[1] * sg * 46 + (ds[1] * sg > 0.5 ? -2 : 4), fmtForce(Math.abs(r.P), D, o), 'mx-ptx', 'start', true);
       if (el) svg.add(el);
     } else if (r.kind === 'strain') {
-      // above the element (below it for the lower lane of parallel elements), clear of its number box
+      // above the element (below it for the lower lane of parallel elements), clear of its tag
       const mx = (X(a.X) + X(b.X)) / 2, my = (Y(a.Y) + Y(b.Y)) / 2 + dl, parts = [];
       if (r.dT) parts.push('ΔT = ' + fmt(r.dT) + '°');
       if (r.e0) parts.push('e0 = ' + (D.units === 'consistent' ? fmt(r.e0) : o.fq(r.e0 * 1000, 'disp')));
-      const el = label(mx, dl > 0 ? my + 26 : my - 22, parts.join(', '), 'mx-motx', 'middle');
+      const el = label(mx, dl > 0 ? my + 36 : my - 22, parts.join(', '), 'mx-motx', 'middle');
       if (el) svg.add(el);
     } else if (r.kind === 'm') {
       const [px, py] = at(r.a);
       svg.add(momentEl(px, py, 14, r.M > 0, 'mx-mo'));
-      const el = label(px + 14, py - 16, fmtMoment(Math.abs(r.M), D, o) + (r.M > 0 ? ' ccw' : ' cw'), 'mx-motx', 'start');
+      lay.boxes.push([px - 16, py - 16, 32, 32]);
+      const el = label(px + 14, py - 16, fmtMoment(Math.abs(r.M), D, o), 'mx-motx', 'start', true);
       if (el) svg.add(el);
     }
   });
@@ -411,11 +462,7 @@ export function interactive(svg, ctx, cfg) {
     h('div', { class: 'seg', role: 'group', 'aria-label': 'Drawing tools' }, tools),
     h('button', { type: 'button', class: 'btn', title: 'Fit the drawing to the structure', onClick: () => { st.lock = null; ctx.refresh(); } }, 'Fit'),
     cfg.canEdit === false ? null : h('label', { class: 'mx-gridf' }, 'Grid ', h('input', { type: 'number', step: 'any', min: '0', value: String(st.grid), 'aria-label': 'Grid spacing',
-      onChange: (e) => { const v = Number(e.target.value); if (v > 0) { st.grid = v; ctx.refresh(); } } }), cons ? '' : ' ' + lu),
-    h('label', { class: 'mx-viewf' }, h('span', { class: 'sr' }, 'Diagram'), h('select', { class: 'sel', 'aria-label': 'Diagram shown', onChange: (e) => { st.view = e.target.value; ctx.refresh(); } },
-      VIEWS[kind].map(([v, l]) => h('option', { value: v, selected: st.view === v }, l)))),
-    st.view === 'M' ? h('label', { class: 'mx-viewf' }, 'Draw M on: ', h('select', { class: 'sel', 'aria-label': 'Draw M on', onChange: (e) => { st.mside = e.target.value; ctx.refresh(); } },
-      [['tension', 'Tension side'], ['compression', 'Compression side']].map(([v, l]) => h('option', { value: v, selected: st.mside === v }, l)))) : null);
+      onChange: (e) => { const v = Number(e.target.value); if (v > 0) { st.grid = v; ctx.refresh(); } } }), cons ? '' : ' ' + lu));
   if (st.pending != null) bar.appendChild(h('span', { class: 'muted small' }, 'Joint ' + st.pending + ' picked: click the other end.'));
   if (!svg || !svg.__mx) return bar;
   const mp = svg.__mx;
@@ -504,4 +551,3 @@ function removeSelected(ctx, cfg) {
   }
 }
 
-export { VIEWS };
