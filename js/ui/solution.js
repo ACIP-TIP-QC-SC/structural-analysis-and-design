@@ -1,5 +1,5 @@
 // Worked solution: numbered steps with formula, substitution, result, note and clause chip.
-import { h } from './dom.js';
+import { h, mathNodes } from './dom.js';
 import { renderTokens } from '../core/format.js';
 import { chip } from './checkrow.js';
 
@@ -19,9 +19,9 @@ export function solutionCard(result, ctx, onClauseDisplay) {
       h('div', { class: 'n' }, String(i + 1)),
       h('div', { class: 'b' },
         h('div', { class: 't' }, st.title),
-        st.formula ? h('div', { class: 'f' }, renderTokens(st.formula, ctx.sys)) : null,
-        st.substitution ? h('div', { class: 's' }, renderTokens(st.substitution, ctx.sys)) : null,
-        st.result ? h('div', { class: 'r' }, renderTokens(st.result, ctx.sys)) : null,
+        st.formula ? h('div', { class: 'f' }, mathNodes(renderTokens(st.formula, ctx.sys))) : null,
+        st.substitution ? h('div', { class: 's' }, mathNodes(renderTokens(st.substitution, ctx.sys))) : null,
+        st.result ? h('div', { class: 'r' }, mathNodes(renderTokens(st.result, ctx.sys))) : null,
         st.note ? h('div', { class: 'note' }, st.note) : null,
         chip(ctx, st.clause))));
   });

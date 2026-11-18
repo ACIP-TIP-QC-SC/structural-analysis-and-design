@@ -3,6 +3,7 @@
 import { fmtDC, fmtQ, renderTokens } from './format.js';
 import { clauseText } from '../codes/index.js';
 import { SYSTEMS } from './units.js';
+import { mathNodes } from '../ui/dom.js';
 
 const SITE = 'Structural Analysis and Design Calculator';
 const ORG = 'American Concrete Institute Philippines T.I.P. QC Student Chapter';
@@ -151,8 +152,8 @@ export function buildReport(r, svg) {
       const body = el('div');
       body.appendChild(el('div', 'tt', st.title));
       const line = [st.formula, st.substitution].filter(Boolean).map((x) => renderTokens(x, sys));
-      line.forEach((x) => body.appendChild(el('div', 'mono', x)));
-      if (st.result) { const d = el('div', 'mono'); d.appendChild(el('strong', null, renderTokens(st.result, sys))); body.appendChild(d); }
+      line.forEach((x) => { const d = el('div', 'mono'); d.append(...mathNodes(x)); body.appendChild(d); });
+      if (st.result) { const d = el('div', 'mono'); const sr = el('strong'); sr.append(...mathNodes(renderTokens(st.result, sys))); d.appendChild(sr); body.appendChild(d); }
       if (st.note) body.appendChild(el('div', 'nt', st.note));
       if (st.clause) body.appendChild(el('div', 'cl', clauseText(r.edition, st.clause, r.clauseDisplay)));
       row.appendChild(body);

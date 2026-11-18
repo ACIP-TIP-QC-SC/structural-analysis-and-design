@@ -10,12 +10,13 @@ export function getEdition(id) {
   return editions.find((e) => e.id === id && e.enabled) || nscp2015;
 }
 
-// Clause chip text. display: 'both' | 'nscp' | 'source'. Tables print without the section sign.
+// Clause chip text. display: 'both' | 'nscp' | 'source'. Sections print as "Sec." ("Secs." for a list),
+// tables and equations print as they are. A no-break space keeps the prefix on the same line as its number.
 export function clauseText(edition, key, display = 'both') {
   const c = edition.clauses[key];
   if (!c) return key || '';
   if (c.text) return c.text;
-  const ref = (s) => (/^Tables? /.test(s) ? s : '§' + s);
+  const ref = (s) => (/^(Tables?|Eqs?\.) /.test(s) ? s : (/,| and /.test(s.split('(')[0]) ? 'Secs.' : 'Sec.') + '\u00a0' + s);
   const a = edition.short + ' ' + ref(c.nscp);
   const b = c.src ? c.code + ' ' + ref(c.src) : '';
   if (display === 'nscp' || !b) return a;
