@@ -37,13 +37,21 @@ for (const file of readdirSync(join(here, 'cases')).filter((f) => f.endsWith('.j
       const keys = ['ok', 'errors', 'warnings', 'notes', 'verdict', 'checks', 'results', 'steps', 'diagram', 'send'];
       const shapeOk = keys.every((k) => k in res) && Object.keys(res).length === keys.length;
       add('result shape', 'exact', shapeOk ? 'exact' : 'differs', shapeOk);
-      for (const [path, exp] of Object.entries(c.expect || {})) {
+      // Matrix Analysis suites: an expected 0 passes when |got| <= 1e-6 x the largest |value| of the
+      // same kind (U, R, N or Q) in the case, and the reference values (expectRef) are compared too.
+      const matrix = suite.module.startsWith('matrix/');
+      const largest = {};
+      if (matrix) Object.entries(Object.assign({}, c.expectRef, c.expect)).forEach(([p, x]) => { const k = p.split('.')[0]; if (typeof x === 'number') largest[k] = Math.max(largest[k] || 0, Math.abs(x)); });
+      const zeroOk = (path, got) => (matrix ? Math.abs(got) <= 1e-6 * (largest[path.split('.')[0]] || 0) || Math.abs(got) < 1e-9 : Math.abs(got) < 1e-9);
+      const compare = (label, path, exp) => {
         const got = pick(vals, path);
         let ok;
-        if (typeof exp === 'number') ok = typeof got === 'number' && (exp === 0 ? Math.abs(got) < 1e-9 : Math.abs(got - exp) / Math.abs(exp) <= TOL);
+        if (typeof exp === 'number') ok = typeof got === 'number' && (exp === 0 ? zeroOk(path, got) : Math.abs(got - exp) / Math.abs(exp) <= TOL);
         else ok = got === exp;
-        add(path, exp, got, ok);
-      }
+        add(label, exp, got, ok);
+      };
+      for (const [path, exp] of Object.entries(c.expect || {})) compare(path, path, exp);
+      for (const [path, exp] of Object.entries(c.expectRef || {})) compare('ref: ' + path, path, exp);
       if ('ok' in c) add('ok', c.ok, res.ok, res.ok === c.ok);
       if (c.errorIncludes) add('error text', c.errorIncludes, (res.errors[0] || '').slice(0, 14) + '…', res.errors.some((e) => e.includes(c.errorIncludes)));
       for (const [name, exp] of Object.entries(c.status || {})) {
@@ -73,6 +81,16 @@ for (const file of readdirSync(join(here, 'cases')).filter((f) => f.endsWith('.j
     lines.push('   ' + pad('value', 30) + pad('expected', 16) + pad('got', 16));
     rows.forEach((r) => lines.push(r));
   }
+}
+// Direct stiffness engine unit tests (tests/matrix-engine.mjs)
+if (!only || 'matrix/engine'.includes(only) || only.startsWith('matrix')) {
+  const { engineTests } = await import(pathToFileURL(join(here, 'matrix-engine.mjs')));
+  const rows = await engineTests();
+  lines.push('', '== matrix/engine  (tests/matrix-engine.mjs)');
+  cases++;
+  let bad = 0;
+  rows.forEach((r) => { total++; if (!r.ok) { bad++; failed++; } lines.push('   ' + pad(r.name, 58) + (r.ok ? 'ok' : 'FAIL') + (r.detail ? '  ' + r.detail : '')); });
+  if (bad) casesFailed++;
 }
 lines.push('', `${cases} cases, ${casesFailed} failed; ${total} comparisons, ${failed} failed. Tolerance ${TOL * 100}%.`);
 console.log(lines.join('\n'));

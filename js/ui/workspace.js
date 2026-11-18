@@ -31,7 +31,8 @@ function convertRows(rows, f, fn) {
   if (!Array.isArray(rows)) return rows;
   return rows.map((r) => {
     const o = Object.assign({}, r);
-    f.columns.forEach((c) => { if (typeof o[c.key] === 'number' && isFinite(o[c.key])) o[c.key] = fn(o[c.key], c.quantity); });
+    // A column quantity may depend on the row (a load value is a force, a moment or a line load).
+    f.columns.forEach((c) => { if (typeof o[c.key] === 'number' && isFinite(o[c.key])) o[c.key] = fn(o[c.key], typeof c.quantity === 'function' ? c.quantity(o) : c.quantity); });
     return o;
   });
 }
@@ -124,7 +125,7 @@ export function createWorkspace(outlet, def, mod, group, route, app) {
     const { input, missing } = siInput();
     if (st.shapeError) return fail([st.shapeError + '.']);
     if (missing.length) return fail(['Every input needs a number. Check: ' + missing.slice(0, 4).join(', ') + (missing.length > 4 ? ' and others' : '') + '.']);
-    try { return def.solve(input, { edition: edition(), method: method() }); }
+    try { return def.solve(input, { edition: edition(), method: method(), sys: sys() }); }
     catch (e) { return fail(['This combination of inputs could not be calculated (' + e.message + ').']); }
   }
 
@@ -180,20 +181,25 @@ export function createWorkspace(outlet, def, mod, group, route, app) {
     const inputs = [];
     const t = tasks().find((x) => x.id === task());
     fieldList().forEach((f) => {
-      if (f.hidden || f.type === 'action') return;
+      if (f.hidden || f.type === 'action' || f.noReport) return;
       const val = st.vals[f.key];
       let text;
       if (f.type === 'check') text = val ? 'Yes' : 'No';
       else if (f.type === 'bar') text = barLabel(val, sys());
       else if (f.type === 'select') { const o = f.options.find((x) => String(x.value) === String(val)); text = o ? o.label : String(val); }
       else if (f.type === 'shape') text = val === 'custom' ? 'Custom section' : String(val);
-      else if (isList(f)) text = (Array.isArray(val) ? val : []).map((r, i) => (i + 1) + ': ' + f.columns.map((c) => c.label + ' ' + (typeof r[c.key] === 'number' ? fmt(r[c.key]) + (unitLabel(c.quantity, sys()) ? ' ' + unitLabel(c.quantity, sys()) : '') : '–')).join(', ')).join('; ');
+      else if (isList(f)) text = (Array.isArray(val) ? val : []).map((r, i) => (i + 1) + ': ' + f.columns.filter((c) => !c.readonly).map((c) => {
+        if (c.type === 'select') { const o = c.options.find((x) => String(x.value) === String(r[c.key])); return c.label + ' ' + (o ? o.label : String(r[c.key])); }
+        const cq = typeof c.quantity === 'function' ? c.quantity(r) : c.quantity;
+        return c.label + ' ' + (typeof r[c.key] === 'number' ? fmt(r[c.key]) + (unitLabel(cq, sys()) ? ' ' + unitLabel(cq, sys()) : '') : '–');
+      }).join(', ')).join('; ');
       else text = typeof val === 'number' && isFinite(val) ? fmt(val) + (unitLabel(f.quantity, sys()) ? ' ' + unitLabel(f.quantity, sys()) : '') : (f.optional ? 'not given' : '–');
       inputs.push({ label: f.label + (f.symbol ? ', ' + f.symbol : ''), value: text });
     });
     return {
       group: group.label, module: def.title, modeLabel: def.modes.find((m) => m.id === st.mode).label, taskLabel: t ? t.label : '',
-      edition: edition(), method: method(), sys: sys(), clauseDisplay: app.state.clauseDisplay, inputs, result: st.result
+      edition: edition(), method: method(), sys: sys(), clauseDisplay: app.state.clauseDisplay, inputs, result: st.result,
+      extra: def.reportExtra && st.result ? def.reportExtra(st.result, uiCtx(), st.vals) : null
     };
   }
   function shareLink() {
@@ -244,6 +250,9 @@ export function createWorkspace(outlet, def, mod, group, route, app) {
       if (method()) card.appendChild(h('div', { class: 'kv' }, h('span', { class: 'muted' }, 'Method'), h('span', null, METHOD_NAMES[method()] || method())));
       card.appendChild(h('div', { class: 'kv' }, h('span', { class: 'muted' }, 'Units'), h('span', null, SYSTEMS[sys()])));
       card.appendChild(h('p', { class: 'muted small', style: 'margin:8px 0 0' }, 'Change these in the top bar at any time and the solution recalculates.'));
+      const setupFields = fieldList().filter((f) => f.step === 'Setup' && !f.hidden);
+      if (setupFields.length) card.appendChild(h('div', { class: 'fields', style: 'margin-top:12px' }, setupFields.map((f) => renderField(f, st.vals[f.key], ctx, onChange))));
+      if (def.setupExtra) card.appendChild(def.setupExtra(ctx, st.vals));
       if (group.id === 'rc' && def.methods.length === 1 && app.state.rcMethod === 'WSD') card.appendChild(h('p', { class: 'muted small', style: 'margin:8px 0 0' }, 'WSD reference mode is available in Beam flexure.'));
       if (def.modes.length > 1) {
         card.appendChild(h('h3', { class: 'h3', style: 'margin-top:20px' }, def.modeHeading || 'Calculation'));
@@ -337,6 +346,13 @@ export function createWorkspace(outlet, def, mod, group, route, app) {
     } else {
       if (viz) viz.update(null, { view: '2d' });
       const svg = drawSvg();
+      if (def.drawInteractive) {
+        // Optional interactive layer (Matrix Analysis model canvas): a toolbar above the drawing and
+        // input on the drawing itself. Inputs still go through onChange, so the tables stay the source.
+        let bar = null;
+        try { bar = def.drawInteractive(svg, { vals: st.vals, sys: sys(), result: st.result, step: stepNames()[st.step], onChange, refresh, goStep: (name) => goStep(stepNames().indexOf(name)) }); } catch (e) { console.error(e); bar = null; }
+        if (bar) card.appendChild(bar);
+      }
       card.appendChild(svg || h('p', { class: 'muted small' }, 'The drawing appears when the inputs are valid.'));
     }
     card.appendChild(h('button', { type: 'button', class: 'tooltab' + (st.toolsOpen ? ' open' : ''), 'aria-label': 'Drawing options', 'aria-expanded': String(st.toolsOpen), onClick: () => { st.toolsOpen = !st.toolsOpen; refresh(); } }, st.toolsOpen ? '›' : '‹'));
@@ -354,7 +370,9 @@ export function createWorkspace(outlet, def, mod, group, route, app) {
     const ctx = uiCtx(), r = st.result;
     clear(parts.out);
     parts.draw = drawCard();
-    [parts.draw, verdictBanner(r), messages(r), keyResults(r, ctx), tables(r, ctx), sendLinks(r, (sd) => app.send(sd, def.title))].forEach((x) => { if (x) parts.out.appendChild(x); });
+    let extra = null;
+    if (def.extraCards) { try { extra = def.extraCards(r, ctx, st.vals); } catch (e) { console.error(e); extra = null; } }
+    [parts.draw, verdictBanner(r), messages(r), keyResults(r, ctx), extra && extra.top, tables(r, ctx), extra && extra.bottom, sendLinks(r, (sd) => app.send(sd, def.title))].flat().forEach((x) => { if (x) parts.out.appendChild(x); });
     if (parts.checks) { clear(parts.checks); parts.checks.appendChild(checksSummary(r, ctx)); }
     clear(parts.solution);
     if (st.step === stepNames().length - 1 && r.ok && r.steps.length) parts.solution.appendChild(solutionCard(r, ctx, (val) => app.set('clauseDisplay', val)));

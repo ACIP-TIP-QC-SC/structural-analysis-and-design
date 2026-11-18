@@ -46,3 +46,17 @@
 .rp .msg{margin:0 0 4px}
 .rp svg{width:100%;height:auto;display:block;max-height:75mm}
 .rp .rp-msgs{margin-bottom:10px}
+/* Matrix Analysis report: matrices with partition colours, printed in strips. */
+.rp .mxt{border-collapse:collapse;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:6.4pt;width:auto;margin-bottom:6px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.rp .mxt th,.rp .mxt td{padding:1.5px 3px;border:0.5pt solid #D5DBE1;white-space:nowrap;text-align:right;text-transform:none;letter-spacing:0;font-size:6.4pt}
+.rp .mxt tbody th{text-align:left}
+.rp .mx-pp,.rp .mx-sw.mx-pp{background:#FFFFBF}
+.rp .mx-ps,.rp .mx-sw.mx-ps{background:#FFBFBF}
+.rp .mx-sp,.rp .mx-sw.mx-sp{background:#C2D6F6}
+.rp .mx-ss,.rp .mx-sw.mx-ss{background:#BFEBD3}
+.rp .mxt.part .mx-cut{border-left:1.2pt solid #16202B}
+.rp .mxt.part tr.mx-cutrow>*{border-top:1.2pt solid #16202B}
+.rp .mx-legend{display:flex;flex-wrap:wrap;gap:2px 10px;font-size:7pt;color:#52606D;margin-bottom:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.rp .mx-sw{display:inline-block;width:9px;height:9px;border:0.5pt solid #D5DBE1;margin-right:4px;vertical-align:middle}
+.rp .mx-sec{break-inside:auto}
+.rp .mx-sub{font-size:7.5pt;font-weight:600;margin:6px 0 2px}

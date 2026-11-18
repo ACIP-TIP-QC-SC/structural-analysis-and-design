@@ -1,0 +1,106 @@
+{
+ "joints": [
+  {
+   "id": 1,
+   "x": 0,
+   "support": "Fixed",
+   "FY": null,
+   "M": null,
+   "settle": null,
+   "rotation": null
+  },
+  {
+   "id": 2,
+   "x": 3,
+   "support": "Free",
+   "FY": null,
+   "M": null,
+   "settle": null,
+   "rotation": null
+  },
+  {
+   "id": 3,
+   "x": 6,
+   "support": "Pin / Roller",
+   "FY": null,
+   "M": null,
+   "settle": null,
+   "rotation": null
+  },
+  {
+   "id": 4,
+   "x": 10,
+   "support": "Pin / Roller",
+   "FY": null,
+   "M": null,
+   "settle": null,
+   "rotation": null
+  }
+ ],
+ "members": [
+  {
+   "id": 1,
+   "i": 1,
+   "j": 2,
+   "E": 200000000.0,
+   "I": 0.0002,
+   "release": "Hinge at 2nd joint"
+  },
+  {
+   "id": 2,
+   "i": 2,
+   "j": 3,
+   "E": 200000000.0,
+   "I": 0.0002,
+   "release": "None"
+  },
+  {
+   "id": 3,
+   "i": 3,
+   "j": 4,
+   "E": 200000000.0,
+   "I": 0.0002,
+   "release": "None"
+  }
+ ],
+ "memberLoads": [
+  {
+   "member": 1,
+   "type": "3 Uniform load",
+   "value": -15,
+   "w2": null,
+   "a": null,
+   "b": null
+  },
+  {
+   "member": 2,
+   "type": "3 Uniform load",
+   "value": -15,
+   "w2": null,
+   "a": null,
+   "b": null
+  },
+  {
+   "member": 3,
+   "type": "3 Uniform load",
+   "value": -15,
+   "w2": null,
+   "a": null,
+   "b": null
+  },
+  {
+   "member": 3,
+   "type": "1 Point load",
+   "value": -40,
+   "w2": null,
+   "a": 2,
+   "b": null
+  }
+ ],
+ "program": "beam",
+ "expected": [],
+ "units": {
+  "force": "kN",
+  "length": "m"
+ }
+}

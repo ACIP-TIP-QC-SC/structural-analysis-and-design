@@ -16,6 +16,10 @@
   --soil:#EFE6D6;--water:#CFE3F6;
   --sans:'IBM Plex Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace;
   --r-panel:8px;--r-ctl:6px;--pad:16px;--gap:20px;
+  /* Matrix Analysis drawings and partition colours (hand-off 7.1 and 7.4) */
+  --mx-point:#7030A0;--mx-dist:#0070C0;--mx-moment:#C55A11;--mx-react:#008C46;--mx-member:#404040;--mx-joint:#17365D;--mx-tens:#0070C0;--mx-comp:#C00000;
+  --mx-pos:#BDD7EE;--mx-pos-line:#0070C0;--mx-neg:#F8CBAD;--mx-neg-line:#C00000;
+  --mx-kpp:#FFFF00;--mx-kps:#FF0000;--mx-ksp:#0D5ADB;--mx-kss:#00B050;--mx-tint:25%;
   color-scheme:light;
 }
 :root[data-theme="dark"]{
@@ -24,6 +28,9 @@
   --ok:#4CC9A0;--ok-bg:#12352D;--warn:#E9B44C;--warn-bg:#3A2E12;--ng:#FF8A5C;--ng-bg:#3F2018;
   --brand:#E9B44C;--brand-mark:#F08A50;--conc:#2A3541;--track:#2B3744;--bar:#0A0F14;--bar-ink:#9AA7B4;
   --soil:#2E2A22;--water:#1B3048;
+  --mx-point:#C89BE8;--mx-dist:#5CB0F0;--mx-moment:#F0A060;--mx-react:#4CC98A;--mx-member:#E6EDF3;--mx-joint:#E6EDF3;--mx-tens:#5CB0F0;--mx-comp:#FF7A6E;
+  --mx-pos:#1F3F5E;--mx-pos-line:#5CB0F0;--mx-neg:#5A2E22;--mx-neg-line:#FF7A6E;
+  --mx-kpp:#FFFF00;--mx-kps:#FF0000;--mx-ksp:#0D5ADB;--mx-kss:#00B050;--mx-tint:35%;
   color-scheme:dark;
 }
 /* Drawings in the printed report always use the light palette. */
@@ -32,4 +39,7 @@
   --accent:#1F5FA8;--accent-ink:#FFFFFF;--tint:#E8F0FA;
   --ok:#0B6B53;--ok-bg:#E3F4EE;--warn:#8A5A00;--warn-bg:#FBF0D9;--ng:#B3361B;--ng-bg:#FCE9E3;
   --brand:#9A5B00;--brand-mark:#D4612A;--conc:#DDE3E9;--track:#E4E9EE;--soil:#EFE6D6;--water:#CFE3F6;
+  --mx-point:#7030A0;--mx-dist:#0070C0;--mx-moment:#C55A11;--mx-react:#008C46;--mx-member:#404040;--mx-joint:#17365D;--mx-tens:#0070C0;--mx-comp:#C00000;
+  --mx-pos:#BDD7EE;--mx-pos-line:#0070C0;--mx-neg:#F8CBAD;--mx-neg-line:#C00000;
+  --mx-kpp:#FFFF00;--mx-kps:#FF0000;--mx-ksp:#0D5ADB;--mx-kss:#00B050;--mx-tint:25%;
 }

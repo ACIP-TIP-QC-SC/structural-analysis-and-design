@@ -117,7 +117,7 @@ await page.evaluate(() => { const a = window.__sadc.app; a.set('units', 'SI'); a
 // ---- every sidebar item routes
 await page.goto(base + '#');
 const links = await page.$$eval('#side a.navitem', (as) => as.map((a) => a.getAttribute('href')));
-ok(links.length === 32, 'sidebar should list Home and 31 modules, found ' + links.length);
+ok(links.length === registry.MODULES.length + 1, 'sidebar should list Home and ' + registry.MODULES.length + ' modules, found ' + links.length);
 for (const href of links) {
   await page.goto(base + href);
   await page.waitForTimeout(40);

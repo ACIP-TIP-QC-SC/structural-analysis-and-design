@@ -1,0 +1,131 @@
+{
+ "joints": [
+  {
+   "id": 1,
+   "x": 0,
+   "support": "Pin / Roller",
+   "FY": null,
+   "M": null,
+   "settle": null,
+   "rotation": null
+  },
+  {
+   "id": 2,
+   "x": 4,
+   "support": "Pin / Roller",
+   "FY": null,
+   "M": null,
+   "settle": null,
+   "rotation": null
+  },
+  {
+   "id": 3,
+   "x": 6,
+   "support": "Free",
+   "FY": -25,
+   "M": null,
+   "settle": null,
+   "rotation": null
+  },
+  {
+   "id": 4,
+   "x": 8,
+   "support": "Pin / Roller",
+   "FY": null,
+   "M": null,
+   "settle": null,
+   "rotation": null
+  },
+  {
+   "id": 5,
+   "x": 11,
+   "support": "Free",
+   "FY": -20,
+   "M": null,
+   "settle": null,
+   "rotation": null
+  }
+ ],
+ "members": [
+  {
+   "id": 1,
+   "i": 1,
+   "j": 2,
+   "E": 200000000.0,
+   "I": 0.00025,
+   "release": "None"
+  },
+  {
+   "id": 2,
+   "i": 2,
+   "j": 3,
+   "E": 200000000.0,
+   "I": 0.00025,
+   "release": "None"
+  },
+  {
+   "id": 3,
+   "i": 3,
+   "j": 4,
+   "E": 200000000.0,
+   "I": 0.00025,
+   "release": "None"
+  },
+  {
+   "id": 4,
+   "i": 4,
+   "j": 5,
+   "E": 200000000.0,
+   "I": 0.00025,
+   "release": "None"
+  }
+ ],
+ "memberLoads": [
+  {
+   "member": 1,
+   "type": "3 Uniform load",
+   "value": -12,
+   "w2": null,
+   "a": 2,
+   "b": 4
+  },
+  {
+   "member": 2,
+   "type": "3 Uniform load",
+   "value": -12,
+   "w2": null,
+   "a": null,
+   "b": null
+  },
+  {
+   "member": 3,
+   "type": "3 Uniform load",
+   "value": -12,
+   "w2": null,
+   "a": null,
+   "b": null
+  },
+  {
+   "member": 4,
+   "type": "3 Uniform load",
+   "value": -12,
+   "w2": null,
+   "a": 0,
+   "b": 2
+  },
+  {
+   "member": 2,
+   "type": "1 Point load",
+   "value": -30,
+   "w2": null,
+   "a": 0,
+   "b": null
+  }
+ ],
+ "program": "beam",
+ "expected": [],
+ "units": {
+  "force": "kN",
+  "length": "m"
+ }
+}

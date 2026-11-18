@@ -29,7 +29,8 @@ export function solutionText(r) {
   r.inputs.forEach((i) => L.push('  ' + i.label + ': ' + i.value));
   L.push('');
   if (res.ok) {
-    if (res.verdict) L.push('VERDICT: ' + (res.verdict.pass ? 'ADEQUATE' : 'NOT ADEQUATE') + ' (governing: ' + res.verdict.governing + ', D/C = ' + fmtDC(res.verdict.dc) + ')', '');
+    if (res.verdict && res.verdict.line != null) L.push('RESULT: ' + res.verdict.line, '');
+    else if (res.verdict) L.push('VERDICT: ' + (res.verdict.pass ? 'ADEQUATE' : 'NOT ADEQUATE') + ' (governing: ' + res.verdict.governing + ', D/C = ' + fmtDC(res.verdict.dc) + ')', '');
     if (res.checks.length) {
       L.push('CHECKS');
       res.checks.forEach((c) => L.push('  ' + c.name + ': ' + side(c.demand, sys) + ' against ' + side(c.capacity, sys) + '; D/C = ' + fmtDC(c.dc) + '; ' + STATUS[c.status] + ' [' + clauseText(r.edition, c.clause, r.clauseDisplay) + ']' + (c.note ? ' (' + c.note + ')' : '')));
@@ -107,6 +108,12 @@ export function buildReport(r, svg) {
   tt.appendChild(left);
   if (!res.ok) {
     const vb = el('div', 'rp-v fail'); vb.appendChild(el('div', 'w', 'CHECK THE INPUTS')); tt.appendChild(vb);
+  } else if (res.verdict && res.verdict.line != null) {
+    // analysis modules: their own banner word and line
+    const vb = el('div', 'rp-v' + (res.verdict.pass ? '' : ' fail'));
+    vb.appendChild(el('div', 'w', res.verdict.word[res.verdict.pass ? 0 : 1]));
+    vb.appendChild(el('div', null, res.verdict.line));
+    tt.appendChild(vb);
   } else if (res.verdict) {
     const vb = el('div', 'rp-v' + (res.verdict.pass ? '' : ' fail'));
     vb.appendChild(el('div', 'w', res.verdict.pass ? 'ADEQUATE' : 'NOT ADEQUATE'));
@@ -128,6 +135,8 @@ export function buildReport(r, svg) {
   two.appendChild(a);
   if (svg) { const b = el('div'); b.appendChild(el('h2', null, 'Drawing')); b.appendChild(svg); two.appendChild(b); }
   rp.appendChild(two);
+  // Module-specific report sections (Matrix Analysis: tables, matrices and diagrams, hand-off 7.6).
+  if (r.extra) [].concat(r.extra).forEach((node) => { if (node) rp.appendChild(node); });
 
   if (res.ok) {
     if (res.checks.length) {

@@ -1,0 +1,81 @@
+{
+ "joints": [
+  {
+   "id": 1,
+   "x": 0,
+   "support": "Pin / Roller",
+   "FY": null,
+   "M": null,
+   "settle": null,
+   "rotation": null
+  },
+  {
+   "id": 2,
+   "x": 5,
+   "support": "Pin / Roller",
+   "FY": null,
+   "M": null,
+   "settle": null,
+   "rotation": null
+  },
+  {
+   "id": 3,
+   "x": 9,
+   "support": "Fixed",
+   "FY": null,
+   "M": null,
+   "settle": null,
+   "rotation": null
+  }
+ ],
+ "members": [
+  {
+   "id": 1,
+   "i": 1,
+   "j": 2,
+   "E": 200000000.0,
+   "I": 0.0003,
+   "release": "None"
+  },
+  {
+   "id": 2,
+   "i": 2,
+   "j": 3,
+   "E": 200000000.0,
+   "I": 0.00015,
+   "release": "None"
+  }
+ ],
+ "memberLoads": [
+  {
+   "member": 1,
+   "type": "4 Linear load",
+   "value": -10,
+   "w2": -21.11111111111111,
+   "a": null,
+   "b": null
+  },
+  {
+   "member": 2,
+   "type": "4 Linear load",
+   "value": -21.11111111111111,
+   "w2": -30,
+   "a": null,
+   "b": null
+  },
+  {
+   "member": 1,
+   "type": "2 Couple",
+   "value": 20,
+   "w2": null,
+   "a": 2.5,
+   "b": null
+  }
+ ],
+ "program": "beam",
+ "expected": [],
+ "units": {
+  "force": "kN",
+  "length": "m"
+ }
+}

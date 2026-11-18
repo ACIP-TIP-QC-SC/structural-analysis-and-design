@@ -10,9 +10,11 @@ export const pill = (status) => h('span', { class: 'pill ' + STATUS[status].cls 
 
 export function verdictLine(result) {
   const vd = result.verdict;
+  if (vd && vd.line != null) return vd.line;
   return vd ? 'Governing: ' + vd.governing + ', D/C = ' + fmtDC(vd.dc) : '';
 }
-export const verdictWord = (result) => (result.verdict.pass ? 'ADEQUATE' : 'NOT ADEQUATE');
+// An analysis module may name its own banner word (e.g. SOLVED) and line; design modules do not.
+export const verdictWord = (result) => (result.verdict.word ? result.verdict.word[result.verdict.pass ? 0 : 1] : (result.verdict.pass ? 'ADEQUATE' : 'NOT ADEQUATE'));
 
 export function verdictBanner(result) {
   if (!result.ok) {
@@ -33,7 +35,7 @@ export function stickyStrip(result) {
   if (!result.ok) { el.appendChild(h('span', { class: 'pill ng' }, 'Check the inputs')); return el; }
   if (!result.verdict) return null;
   el.appendChild(h('span', { class: 'pill ' + (result.verdict.pass ? 'ok' : 'ng') }, verdictWord(result)));
-  el.appendChild(h('span', { class: 'mono' }, 'D/C = ' + fmtDC(result.verdict.dc)));
+  if (result.verdict.line == null) el.appendChild(h('span', { class: 'mono' }, 'D/C = ' + fmtDC(result.verdict.dc)));
   el.appendChild(h('span', { class: 'muted' }, result.verdict.governing));
   return el;
 }

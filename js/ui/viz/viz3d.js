@@ -388,7 +388,7 @@ export function createViewer(host) {
       const rebuild = m !== model || o.view !== opts.view || o.rebar !== opts.rebar;
       const wasPlaying = playing;
       model = m; opts = Object.assign({}, o);
-      if (!model) { clearModel(); draw(); return; }
+      if (!model) { playing = false; cancelAnimationFrame(raf); clearModel(); draw(); return; }
       if (bg !== o.bg) { bg = o.bg; scene.background = new THREE.Color(o.bg || '#f4f5f7'); }
       size();
       if (rebuild) build();

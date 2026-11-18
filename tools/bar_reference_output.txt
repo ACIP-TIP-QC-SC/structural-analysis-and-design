@@ -1,0 +1,25 @@
+BR-1: two elements between walls: a point load in element 1, a linear load on element 2, a node load
+   U.U2     by hand  0.0005814814815   by DSM  0.0005814814815   ok
+   N1.1     by hand  82.14814815   by DSM  82.14814815   ok
+   N2.1     by hand  22.14814815   by DSM  22.14814815   ok
+   N1.2     by hand -7.851851852   by DSM -7.851851852   ok
+   N2.2     by hand -37.85185185   by DSM -37.85185185   ok
+   R.F1     by hand -82.14814815   by DSM -82.14814815   ok
+   R.F3     by hand -37.85185185   by DSM -37.85185185   ok
+BR-2: two steel elements between walls heated 40 degrees: N = -EA alpha dT
+   U.U2     by hand  0   by DSM  0   ok
+   N1.1     by hand -187.2   by DSM -187.2   ok
+   N2.1     by hand -187.2   by DSM -187.2   ok
+   N1.2     by hand -187.2   by DSM -187.2   ok
+   N2.2     by hand -187.2   by DSM -187.2   ok
+   R.F1     by hand  187.2   by DSM  187.2   ok
+   R.F3     by hand -187.2   by DSM -187.2   ok
+BR-3: bolt and sleeve: bolt 0.2 mm too short (misfit), both heated 50 degrees
+   U.U2     by hand  1.832691945e-06   by DSM  1.832691945e-06   ok
+   N1.1     by hand  47.78684626   by DSM  47.78684626   ok
+   N2.1     by hand  47.78684626   by DSM  47.78684626   ok
+   N1.2     by hand -47.78684626   by DSM -47.78684626   ok
+   N2.2     by hand -47.78684626   by DSM -47.78684626   ok
+   R.F1     by hand  0   by DSM  0   ok
+
+20 of 20 hand values reproduced by the DSM (0 differ).

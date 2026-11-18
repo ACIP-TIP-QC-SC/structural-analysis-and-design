@@ -10,7 +10,7 @@ for (const file of readdirSync(join(root, 'presets')).filter((f) => f.endsWith('
   const mod = await import(pathToFileURL(join(root, 'presets', file)));
   const cases = mod.default.filter((p) => p.test).map((p) => {
     const c = { id: p.test, name: p.name, method: p.method || null, input: Object.assign({ mode: p.mode }, p.inputs) };
-    ['expect', 'status', 'dc', 'pass', 'ok', 'errorIncludes', 'governing', 'equilibrium'].forEach((k) => { if (k in p) c[k] = p[k]; });
+    ['expect', 'expectRef', 'status', 'dc', 'pass', 'ok', 'errorIncludes', 'governing', 'equilibrium'].forEach((k) => { if (k in p) c[k] = p[k]; });
     return c;
   });
   const out = { module: mod.meta.module, calc: mod.meta.calc, cases };

@@ -1,0 +1,214 @@
+{
+ "module": "matrix/bar",
+ "calc": "js/modules/matrix/bar.calc.js",
+ "cases": [
+  {
+   "id": "BR-1",
+   "name": "Test: two elements between walls with a point load, a linear load and a node load (hand solution and independent DSM)",
+   "method": null,
+   "input": {
+    "mode": "nodes",
+    "units": "consistent",
+    "joints": [
+     {
+      "id": 1,
+      "support": "fixed"
+     },
+     {
+      "id": 2,
+      "support": "free",
+      "FX": 30
+     },
+     {
+      "id": 3,
+      "support": "fixed"
+     }
+    ],
+    "members": [
+     {
+      "i": 1,
+      "j": 2,
+      "E": 200000000,
+      "A": 0.001,
+      "L": 2
+     },
+     {
+      "i": 2,
+      "j": 3,
+      "E": 70000000,
+      "A": 0.0015,
+      "L": 3
+     }
+    ],
+    "memberLoads": [
+     {
+      "member": 1,
+      "P": 60,
+      "a": 1.2
+     },
+     {
+      "member": 2,
+      "w1": 5,
+      "w2": 15
+     }
+    ]
+   },
+   "expect": {
+    "U.U2": 0.0005814814814814814,
+    "N1.1": 82.14814814814815,
+    "N2.1": 22.148148148148145,
+    "N1.2": -7.851851851851851,
+    "N2.2": -37.85185185185185,
+    "R.F1": -82.14814814814815,
+    "R.F3": -37.85185185185185
+   },
+   "expectRef": {
+    "U.U1": 0,
+    "U.U2": 0.0005814814814814814,
+    "U.U3": 0,
+    "R.F1": -82.14814814814815,
+    "R.F3": -37.85185185185185,
+    "N1.1": 82.14814814814815,
+    "N1.2": -7.851851851851851,
+    "N2.1": 22.148148148148145,
+    "N2.2": -37.85185185185185
+   }
+  },
+  {
+   "id": "BR-2",
+   "name": "Test: steel bar between walls heated 40 degrees, N = −EAαΔT (hand solution and independent DSM)",
+   "method": null,
+   "input": {
+    "mode": "nodes",
+    "units": "consistent",
+    "joints": [
+     {
+      "id": 1,
+      "support": "fixed"
+     },
+     {
+      "id": 2,
+      "support": "free"
+     },
+     {
+      "id": 3,
+      "support": "fixed"
+     }
+    ],
+    "members": [
+     {
+      "i": 1,
+      "j": 2,
+      "E": 200000000,
+      "A": 0.002,
+      "L": 2
+     },
+     {
+      "i": 2,
+      "j": 3,
+      "E": 200000000,
+      "A": 0.002,
+      "L": 2
+     }
+    ],
+    "memberLoads": [
+     {
+      "member": 1,
+      "alpha": 0.0000117,
+      "dT": 40
+     },
+     {
+      "member": 2,
+      "alpha": 0.0000117,
+      "dT": 40
+     }
+    ]
+   },
+   "expect": {
+    "U.U2": 0,
+    "N1.1": -187.2,
+    "N2.1": -187.2,
+    "N1.2": -187.2,
+    "N2.2": -187.2,
+    "R.F1": 187.2,
+    "R.F3": -187.2
+   },
+   "expectRef": {
+    "U.U1": 0,
+    "U.U2": 0,
+    "U.U3": 0,
+    "R.F1": 187.2,
+    "R.F3": -187.2,
+    "N1.1": -187.2,
+    "N1.2": -187.2,
+    "N2.1": -187.2,
+    "N2.2": -187.2
+   }
+  },
+  {
+   "id": "BR-3",
+   "name": "Test: bolt and sleeve, bolt 0.2 mm too short (misfit) and both heated 50 degrees (hand solution and independent DSM)",
+   "method": null,
+   "input": {
+    "mode": "nodes",
+    "units": "consistent",
+    "joints": [
+     {
+      "id": 1,
+      "support": "fixed"
+     },
+     {
+      "id": 2,
+      "support": "free"
+     }
+    ],
+    "members": [
+     {
+      "i": 1,
+      "j": 2,
+      "E": 200000000,
+      "d": 0.02,
+      "L": 0.15
+     },
+     {
+      "i": 1,
+      "j": 2,
+      "E": 70000000,
+      "A": 0.0006,
+      "L": 0.15
+     }
+    ],
+    "memberLoads": [
+     {
+      "member": 1,
+      "e0": -0.0002,
+      "alpha": 0.0000117,
+      "dT": 50
+     },
+     {
+      "member": 2,
+      "alpha": 0.000023,
+      "dT": 50
+     }
+    ]
+   },
+   "expect": {
+    "U.U2": 0.000001832691944874155,
+    "N1.1": 47.78684625543522,
+    "N2.1": 47.78684625543522,
+    "N1.2": -47.78684625543522,
+    "N2.2": -47.78684625543522,
+    "R.F1": 0
+   },
+   "expectRef": {
+    "U.U1": 0,
+    "U.U2": 0.0000018326919448741573,
+    "R.F1": 0,
+    "N1.1": 47.78684625543523,
+    "N1.2": -47.78684625543523,
+    "N2.1": 47.78684625543523,
+    "N2.2": -47.78684625543523
+   }
+  }
+ ]
+}

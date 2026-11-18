@@ -3,6 +3,7 @@ export const GROUPS = [
   { id: 'rc', label: 'Reinforced concrete', abbr: 'RC', methods: ['USD', 'WSD'], stateKey: 'rcMethod' },
   { id: 'steel', label: 'Steel', abbr: 'ST', methods: ['LRFD', 'ASD'], stateKey: 'steelMethod' },
   { id: 'found', label: 'Foundations', abbr: 'FD', methods: [], stateKey: null },
+  { id: 'matrix', label: 'Matrix Analysis', abbr: 'MA', methods: [], stateKey: null },
   { id: 'shared', label: 'Shared tools', abbr: 'SH', methods: [], stateKey: null }
 ];
 
@@ -36,6 +37,10 @@ export const MODULES = [
   m('found/pile-capacity', 'Pile capacity', ['Point', 'Skin', 'Group'], 3, 'Point and skin resistance of single piles and pile groups.', 'Static formulas for the point and skin resistance of a pile and the efficiency of a group.', 'soil'),
   m('found/pile-caps', 'Pile caps', ['Reactions', 'Shear', 'Flexure'], 3, 'Pile reactions, shear and flexure of a rigid cap.', 'Reactions of the piles under a rigid cap and the shear and flexure design of the cap.', 'footing'),
   m('found/settlement', 'Settlement', [], 'Optional', 'Elastic and consolidation settlement.', 'Optional module, planned for a later release.', 'soil'),
+  m('matrix/truss', 'Truss', ['By joints'], 4, 'Plane trusses by the direct stiffness method.', 'Joint displacements, support reactions and member axial forces of a plane truss, with the member and structure stiffness matrices, the partitioned matrix and every step of the solution. Handles settlements and inclined rollers.', 'truss'),
+  m('matrix/beam', 'Beams', ['By spans', 'By joints'], 4, 'Continuous beams by the direct stiffness method.', 'Displacements, reactions, member end forces, shear and moment diagrams and the elastic curve of a beam. Point, couple, uniform and linear loads, hinges, settlements and prescribed rotations.', 'beam'),
+  m('matrix/frame', 'Frames', ['By joints'], 4, 'Plane frames by the direct stiffness method.', 'Displacements, reactions, member end forces, axial, shear and moment diagrams and the deflected shape of a plane frame, with member releases, inclined rollers and loads in local or global directions.', 'frame'),
+  m('matrix/bar', 'Bars (axial)', ['By nodes'], 4, 'Axially loaded bars by the direct stiffness method.', 'Displacements, reactions, axial forces and stresses of bars in a line, with distributed axial loads, temperature change and misfit.', 'bar'),
   m('shared/load-transfer', 'Load transfer', ['Panel distribution', 'Load takeoff'], 1, 'Slab loads to beams, columns and footings.', 'Distribute a floor panel load to its edge beams by one-way or two-way action, or take off loads down to a column and its footing.', 'panel'),
   m('shared/load-combos', 'Load combinations', ['Strength', 'Allowable'], 1, 'NSCP Section 203 strength and allowable combinations.', 'Evaluate every load combination of Section 203 for your loads and mark the governing maximum and minimum.', 'combo'),
   m('shared/wind', 'Wind loads', [], 'Later', 'Wind loads on buildings.', 'Planned for a later release.', 'combo'),
@@ -68,7 +73,11 @@ const LOADERS = {
   'steel/base-plates': () => import('../modules/steel/base-plates.ui.js'),
   'found/mat': () => import('../modules/found/mat.ui.js'),
   'found/pile-capacity': () => import('../modules/found/pile-capacity.ui.js'),
-  'found/pile-caps': () => import('../modules/found/pile-caps.ui.js')
+  'found/pile-caps': () => import('../modules/found/pile-caps.ui.js'),
+  'matrix/truss': () => import('../modules/matrix/truss.ui.js'),
+  'matrix/beam': () => import('../modules/matrix/beam.ui.js'),
+  'matrix/frame': () => import('../modules/matrix/frame.ui.js'),
+  'matrix/bar': () => import('../modules/matrix/bar.ui.js')
 };
 
 export const getModule = (id) => MODULES.find((x) => x.id === id) || null;

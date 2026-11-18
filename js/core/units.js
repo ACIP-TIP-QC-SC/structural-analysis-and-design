@@ -27,6 +27,11 @@ export const QUANTITIES = {
   force_per_mm: { si: 'kN/mm',  us: 'kip/in',    f: 4.4482216 / 25.4 },
   n_per_mm:     { si: 'N/mm',   us: 'kip/in',    f: 4448.2216 / 25.4 },
   bar:          { si: 'mm',     us: 'mm',        f: 1 },   // bar designations stay metric
+  // Matrix Analysis (direct stiffness method).
+  disp:         { si: 'mm',       us: 'in',         f: 25.4 },
+  rotation:     { si: 'rad',      us: 'rad',        f: 1 },
+  stiffness:    { si: 'kN/m',     us: 'kip/in',     f: 4.4482216 / 0.0254 },
+  rotstiffness: { si: 'kN·m/rad', us: 'kip·ft/rad', f: 1.3558179 },
   text:         { si: '',       us: '',          f: 1 }
 };
 

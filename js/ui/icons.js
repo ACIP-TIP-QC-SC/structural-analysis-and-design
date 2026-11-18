@@ -26,6 +26,8 @@ const ICONS = {
   footplan: `<rect x="4" y="4" width="36" height="36" ${c}/><rect x="17" y="17" width="10" height="10" ${k}/><rect x="12" y="12" width="20" height="20" ${a} stroke-dasharray="3 2"/>`,
   panel: `<rect x="4" y="8" width="36" height="28" ${c}/><path d="M4 8l14 14L4 36M40 8L26 22l14 14M18 22h8" ${a}/>`,
   takeoff: `<path d="M6 8h32M6 20h32M6 32h32" ${l}/><path d="M10 8v32M34 8v32" ${l}/><path d="M22 2v6M19 5l3 3 3-3" ${a}/>`,
+  truss: `<path d="M4 32h36M4 32l9-16h18l9 16M13 16l9 16 9-16" ${l}/><path d="M1 38l3-6 3 6zM37 38l3-6 3 6z" ${k}/>`,
+  frame: `<path d="M9 38V12h26v26" ${l}/><path d="M9 12l13-7 13 7" ${a}/><path d="M4 38h10M30 38h10" ${l}/><path d="M4 41l3-3M8 41l3-3M30 41l3-3M34 41l3-3" ${l}/>`,
   combo: `<path d="M6 36V8M6 36h32" ${l}/><rect x="10" y="20" width="6" height="16" ${c}/><rect x="19" y="12" width="6" height="24" ${c}/><rect x="28" y="24" width="6" height="12" ${c}/>`
 };
 export function iconMarkup(name) {
