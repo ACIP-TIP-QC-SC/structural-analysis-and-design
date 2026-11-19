@@ -198,7 +198,7 @@ for (const hash of ['rc/beam-flexure/singly', 'steel/compression/buckling', 'fou
   await settle();
   const rp = await page.evaluate(() => {
     const r = document.getElementById('report');
-    return { text: r.innerText, shown: getComputedStyle(r).display !== 'none', appHidden: getComputedStyle(document.querySelector('.app')).display === 'none', wm: !!r.querySelector('.rp-wm'), logo: !!r.querySelector('img'), tables: r.querySelectorAll('table').length, steps: r.querySelectorAll('.st').length, svg: !!r.querySelector('svg'), title: document.title };
+    return { text: r.innerText, shown: getComputedStyle(r).display !== 'none', appHidden: getComputedStyle(document.querySelector('.app')).display === 'none', wm: /svg/.test(getComputedStyle(r.querySelector('.rp')).backgroundImage), logo: !!r.querySelector('img'), tables: r.querySelectorAll('table').length, steps: r.querySelectorAll('.st').length, svg: !!r.querySelector('svg'), title: document.title };
   });
   const tag = 'report ' + hash + ': ';
   ok(rp.shown && rp.appHidden, tag + 'print view not switched');

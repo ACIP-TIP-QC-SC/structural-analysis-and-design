@@ -86,7 +86,6 @@ export function buildReport(r, svg) {
   root.textContent = '';
   const res = r.result, sys = r.sys;
   const rp = el('div', 'rp lightpal');
-  rp.appendChild(el('div', 'rp-wm', 'ACIP T.I.P. QC SC')).setAttribute('aria-hidden', 'true');
 
   const head = el('div', 'rp-head');
   const img = el('img'); img.src = 'assets/logo-256.png'; img.alt = 'ACI Philippines T.I.P. Quezon City Student Chapter logo';
