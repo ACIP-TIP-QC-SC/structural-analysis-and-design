@@ -69,7 +69,7 @@ function el(tag, cls, text) {
   return e;
 }
 function table(head, rows) {
-  const t = el('table', rows.length <= 14 ? 'keep' : null);
+  const t = el('table');
   if (head) { const tr = el('tr'); head.forEach((x) => tr.appendChild(el('th', null, x))); t.appendChild(tr); }
   rows.forEach((cells) => {
     const tr = el('tr');
@@ -168,7 +168,21 @@ export function buildReport(r, svg) {
       rp.appendChild(row);
     });
   }
+  keepTables(rp);
   root.appendChild(rp);
+}
+
+// Wrap every table, with the heading, label or legend right above it, in a block that does not break
+// across pages (Safari ignores break-inside on table boxes, so the wrapper carries it too).
+function keepTables(rp) {
+  const lead = (n) => n && n.nodeType === 1 && (n.tagName === 'H2' || n.classList.contains('mx-sub') || n.classList.contains('mx-legend') || n.classList.contains('mx-ptitle'));
+  rp.querySelectorAll('table').forEach((t) => {
+    if (t.parentNode.closest && t.parentNode.closest('.rp-keep')) return;
+    const w = el('div', 'rp-keep');
+    t.parentNode.insertBefore(w, t);
+    w.appendChild(t);
+    while (lead(w.previousElementSibling)) w.insertBefore(w.previousElementSibling, w.firstChild);
+  });
 }
 
 // Print with a suggested PDF name of <module>-<mode>.pdf.

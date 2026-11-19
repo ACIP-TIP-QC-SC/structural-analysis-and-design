@@ -9,10 +9,10 @@
   #report{display:block!important}
 }
 .rp{font-family:'IBM Plex Sans',system-ui,sans-serif;color:#16202B;font-size:9pt;line-height:1.45;background:#fff}
-/* Watermark: one tile per printed page (100vh is the page area when printing), drawn as the report's
+/* Watermark: one tile per printed page (267 mm = the A4 page area inside the margins; Safari on Letter paper scales the report so its page area is about the same), drawn as the report's
    background. A position:fixed element is printed on the first page only by Safari (iPhone, iPad, Mac),
    and its centring broke when the page was narrower than the text. */
-.rp{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 210 267' preserveAspectRatio='xMidYMid meet'><text x='105' y='128' text-anchor='middle' dominant-baseline='middle' transform='rotate(-32 105 128)' font-family='IBM Plex Sans,Helvetica,Arial,sans-serif' font-weight='600' font-size='20' fill='%231F5FA8' fill-opacity='0.08'>ACIP T.I.P. QC SC</text></svg>");background-repeat:repeat-y;background-position:center top;background-size:100% 100vh;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.rp{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 210 267' preserveAspectRatio='xMidYMid meet'><text x='105' y='128' text-anchor='middle' dominant-baseline='middle' transform='rotate(-32 105 128)' font-family='IBM Plex Sans,Helvetica,Arial,sans-serif' font-weight='600' font-size='20' fill='%231F5FA8' fill-opacity='0.08'>ACIP T.I.P. QC SC</text></svg>");background-repeat:repeat-y;background-position:center top;background-size:100% 267mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .rp .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
 .rp-head{display:flex;gap:12px;align-items:center;border-bottom:2px solid #16202B;padding-bottom:10px;margin-bottom:12px}
 .rp-head img{height:60px;width:auto;flex:0 0 auto}
@@ -37,7 +37,9 @@
 .rp td{padding:4px 6px;border-bottom:1px solid #D5DBE1;vertical-align:top}
 .rp tr{break-inside:avoid}
 .rp h2{break-after:avoid}
-.rp table.keep{break-inside:avoid}
+/* a table never splits across pages unless it is taller than a page: it moves whole to the next page,
+   with its heading (report.js wraps each table and the heading just above it in .rp-keep) */
+.rp table,.rp .rp-keep{break-inside:avoid;page-break-inside:avoid}
 .rp .ok{color:#0B6B53;font-weight:600}
 .rp .near{color:#8A5A00;font-weight:600}
 .rp .ng{color:#B3361B;font-weight:600}
