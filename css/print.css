@@ -40,6 +40,8 @@
 /* a table never splits across pages unless it is taller than a page: it moves whole to the next page,
    with its heading (report.js wraps each table and the heading just above it in .rp-keep) */
 .rp table,.rp .rp-keep{break-inside:avoid;page-break-inside:avoid}
+.rp .rp-keep{display:inline-block;width:100%;vertical-align:top}
+.rp .rp-keep.tall{display:block}
 .rp .ok{color:#0B6B53;font-weight:600}
 .rp .near{color:#8A5A00;font-weight:600}
 .rp .ng{color:#B3361B;font-weight:600}

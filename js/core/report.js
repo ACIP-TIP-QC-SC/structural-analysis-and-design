@@ -172,16 +172,32 @@ export function buildReport(r, svg) {
   root.appendChild(rp);
 }
 
-// Wrap every table, with the heading, label or legend right above it, in a block that does not break
-// across pages (Safari ignores break-inside on table boxes, so the wrapper carries it too).
+// Keep things whole across pages: every table (with the heading, label or legend right above it),
+// every diagram panel, and every heading with the first block under it. A kept block that does not fit
+// moves to the next page. Safari ignores break-inside on tables and splits ordinary blocks anyway, so a
+// kept block prints as an inline-block, which no browser splits; a table of more than 40 rows (taller
+// than a page) stays an ordinary block and splits between rows.
 function keepTables(rp) {
+  const isKeep = (n) => n && n.nodeType === 1 && n.classList.contains('rp-keep');
   const lead = (n) => n && n.nodeType === 1 && (n.tagName === 'H2' || n.classList.contains('mx-sub') || n.classList.contains('mx-legend') || n.classList.contains('mx-ptitle'));
+  const wrap = (first) => { const w = el('div', 'rp-keep'); first.parentNode.insertBefore(w, first); w.appendChild(first); return w; };
   rp.querySelectorAll('table').forEach((t) => {
     if (t.parentNode.closest && t.parentNode.closest('.rp-keep')) return;
-    const w = el('div', 'rp-keep');
-    t.parentNode.insertBefore(w, t);
-    w.appendChild(t);
+    const w = wrap(t);
+    if (t.rows.length > 40) w.classList.add('tall');
     while (lead(w.previousElementSibling)) w.insertBefore(w.previousElementSibling, w.firstChild);
+  });
+  rp.querySelectorAll('.mx-panel').forEach((f) => f.classList.add('rp-keep'));
+  // a heading left on its own joins the first kept block after it, or is wrapped with the next block
+  rp.querySelectorAll('h2, .mx-sub').forEach((hd) => {
+    if (hd.parentNode.closest('.rp-keep')) return;
+    const n = hd.nextElementSibling;
+    if (!n) return;
+    let k = n;
+    while (k && !isKeep(k)) k = k.firstElementChild;
+    if (k) { k.insertBefore(hd, k.firstChild); return; }
+    const w = wrap(hd);
+    w.appendChild(n);
   });
 }
 
