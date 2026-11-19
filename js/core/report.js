@@ -187,6 +187,16 @@ function keepTables(rp) {
     if (t.rows.length > 40) w.classList.add('tall');
     while (lead(w.previousElementSibling)) w.insertBefore(w.previousElementSibling, w.firstChild);
   });
+  // a matrix wider than 10 columns: its kept block goes on a page of its own, turned 90 degrees; the font
+  // shrinks when it would still not fit (about 18 columns and 34 rows at full size)
+  rp.querySelectorAll('table.mxt').forEach((t) => {
+    const cols = t.rows.length ? t.rows[0].cells.length - 1 : 0, rows = t.rows.length;
+    if (cols <= 10) return;
+    const keep = t.closest('.rp-keep'), land = el('div', 'rp-land'), rot = el('div', 'rp-rot');
+    keep.parentNode.insertBefore(land, keep);
+    rot.appendChild(keep); land.appendChild(rot);
+    t.style.fontSize = Math.min(6.4, 6.4 * 18 / cols, 6.4 * 34 / rows).toFixed(2) + 'pt';
+  });
   rp.querySelectorAll('.mx-panel').forEach((f) => f.classList.add('rp-keep'));
   // a heading left on its own joins the first kept block after it, or is wrapped with the next block
   rp.querySelectorAll('h2, .mx-sub').forEach((hd) => {

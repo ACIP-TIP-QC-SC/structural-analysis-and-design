@@ -9,10 +9,13 @@
   #report{display:block!important}
 }
 .rp{font-family:'IBM Plex Sans',system-ui,sans-serif;color:#16202B;font-size:9pt;line-height:1.45;background:#fff}
-/* Watermark: one tile per printed page (267 mm = the A4 page area inside the margins; Safari on Letter paper scales the report so its page area is about the same), drawn as the report's
-   background. A position:fixed element is printed on the first page only by Safari (iPhone, iPad, Mac),
-   and its centring broke when the page was narrower than the text. */
-.rp{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 210 267' preserveAspectRatio='xMidYMid meet'><text x='105' y='128' text-anchor='middle' dominant-baseline='middle' transform='rotate(-32 105 128)' font-family='IBM Plex Sans,Helvetica,Arial,sans-serif' font-weight='600' font-size='20' fill='%231F5FA8' fill-opacity='0.08'>ACIP T.I.P. QC SC</text></svg>");background-repeat:repeat-y;background-position:center top;background-size:100% 267mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+/* Watermark: an overlay on top of the report (so coloured table cells cannot hide it), two large
+   diagonal copies per A4 page (tile 133.5 mm = half the page area). It is a layer over the whole report,
+   not a position:fixed element, because Safari prints fixed elements on the first page only. Safari
+   scales the page to its own paper and margins, so there the copies can sit higher or lower on a page,
+   but each page still carries at least one whole copy (the text is 100 mm tall, the tile 133.5 mm). */
+.rp{position:relative}
+.rp::after{content:"";position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none;z-index:50;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 182 133.5' preserveAspectRatio='xMidYMid meet'><text x='91' y='66.75' text-anchor='middle' dominant-baseline='middle' transform='rotate(-25 91 66.75)' font-family='IBM Plex Sans,Helvetica,Arial,sans-serif' font-weight='700' font-size='18.5' fill='%231F5FA8' fill-opacity='0.13'>ACIP T.I.P. QC SC</text></svg>");background-repeat:repeat-y;background-position:center top;background-size:100% 133.5mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .rp .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
 .rp-head{display:flex;gap:12px;align-items:center;border-bottom:2px solid #16202B;padding-bottom:10px;margin-bottom:12px}
 .rp-head img{height:60px;width:auto;flex:0 0 auto}
@@ -42,6 +45,14 @@
 .rp table,.rp .rp-keep{break-inside:avoid;page-break-inside:avoid}
 .rp .rp-keep{display:inline-block;width:100%;vertical-align:top}
 .rp .rp-keep.tall{display:block}
+/* a matrix wider than 10 columns prints on its own page, turned 90 degrees (landscape) */
+.rp .rp-land{display:block;position:relative;width:100%;height:238mm;break-before:page;break-after:page;page-break-before:always;page-break-after:always;break-inside:avoid;page-break-inside:avoid}
+.rp .rp-rot{position:absolute;left:0;top:0;width:238mm;transform-origin:0 0;transform:translateY(238mm) rotate(-90deg)}
+/* diagrams: frames two by two, beams and bars one under another, at a fixed height */
+.rp .mx-dgrid{display:grid;grid-template-columns:1fr 1fr;gap:3mm 6mm}
+.rp .mx-dgrid .mx-panel svg{width:100%;height:auto;max-height:none}
+.rp .mx-sec>.mx-panel svg,.rp .mx-sec>.rp-keep>.mx-panel svg{width:100%;height:58mm;max-height:none}
+.rp .mx-panel .mx-ptitle{font-size:8pt;margin:0 0 2px}
 .rp .ok{color:#0B6B53;font-weight:600}
 .rp .near{color:#8A5A00;font-weight:600}
 .rp .ng{color:#B3361B;font-weight:600}
@@ -67,6 +78,6 @@
 .rp .mx-sw{display:inline-block;width:9px;height:9px;border:0.5pt solid #D5DBE1;margin-right:4px;vertical-align:middle}
 .rp .mx-sec{break-inside:auto}
 .rp .mx-sub{font-size:7.5pt;font-weight:600;margin:6px 0 2px}
-.rp .mx-panel{break-inside:avoid;margin:0 0 8px}
+.rp .mx-panel{break-inside:avoid;margin:0 0 4mm}
 .rp .mx-panel .mx-viewf{display:none}
 .rp .mx-notes{font-size:7.5pt;color:#52606D;margin:2px 0 0;padding-left:14px}

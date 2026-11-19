@@ -367,9 +367,10 @@ export function reportSections(r, ctx, inputTables, state) {
   if (!r.ok || !D.res) return out;
   // the result diagrams (beams, frames, bars), as on the screen
   const panels = diagramPanels(r, sys, D.kind, state || {}, () => {});
-  if (panels.length) out.push(sec('Diagrams', panels));
+  // frames: the four diagrams two by two, kept together; beams and bars: one under another, close together
+  if (panels.length) out.push(D.kind === 'frame' ? sec('Diagrams', h('div', { class: 'rp-keep' }, h('div', { class: 'mx-dgrid' }, panels))) : sec('Diagrams', panels));
   const sc = mxScale(sys, D.units);
-  const strips = (title, o) => h('div', null, h('div', { class: 'mx-sub' }, title), o.nFree != null ? partitionLegend() : null, matrixStrips(o, 8));
+  const strips = (title, o) => h('div', null, h('div', { class: 'mx-sub' }, title), o.nFree != null ? partitionLegend() : null, matrixStrips(o, 1000));
   out.push(sec('Member matrices (' + sc.label + ')', D.res.map((m) => strips((D.kind === 'beam' ? 'Element ' : 'Member ') + m.id + ': K = Tᵀ k T' + (m.release !== 'none' ? ' (modified for the release, MT = ' + m.MT + ')' : ''), { rows: m.names, cols: m.names, data: scaleM(m.K, m.names, m.names, sc.K) }))));
   const names = D.dofNames, ord = D.order;
   out.push(sec('Structure stiffness matrix K', strips('K', { rows: names, cols: names, data: scaleM(D.K, names, names, sc.K) })));
