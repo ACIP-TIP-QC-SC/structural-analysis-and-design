@@ -9,13 +9,16 @@
   #report{display:block!important}
 }
 .rp{font-family:'IBM Plex Sans',system-ui,sans-serif;color:#16202B;font-size:9pt;line-height:1.45;background:#fff}
-/* Watermark: an overlay on top of the report (so coloured table cells cannot hide it), two large
-   diagonal copies per A4 page (tile 133.5 mm = half the page area). It is a layer over the whole report,
-   not a position:fixed element, because Safari prints fixed elements on the first page only. Safari
-   scales the page to its own paper and margins, so there the copies can sit higher or lower on a page,
-   but each page still carries at least one whole copy (the text is 100 mm tall, the tile 133.5 mm). */
-.rp{position:relative}
-.rp::after{content:"";position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none;z-index:50;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 182 133.5' preserveAspectRatio='xMidYMid meet'><text x='91' y='66.75' text-anchor='middle' dominant-baseline='middle' transform='rotate(-25 91 66.75)' font-family='IBM Plex Sans,Helvetica,Arial,sans-serif' font-weight='700' font-size='18.5' fill='%231F5FA8' fill-opacity='0.13'>ACIP T.I.P. QC SC</text></svg>");background-repeat:repeat-y;background-position:center top;background-size:100% 133.5mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+/* Page geometry. --R is the height of the printed page area over its width: 267/182 for the A4 page
+   set by @page (Chrome, Edge, Firefox); Safari on iPhone and iPad ignores @page and prints on Letter with
+   its own margins, an area of 520 x 655.5 pt, measured from its PDF. The report is a size container, so
+   100cqw is the page width at whatever scale the browser prints, and R*100cqw is one page height. */
+.rp{position:relative;container-type:inline-size;--R:1.467}
+@supports (-webkit-touch-callout:none){.rp{--R:1.2606}}
+/* Watermark: one large diagonal copy in the middle of every page, as an overlay on top of the report (so
+   coloured table cells cannot hide it). It is a layer over the whole report repeated once per page height,
+   not a position:fixed element, because Safari prints fixed elements on the first page only. */
+.rp::after{content:"";position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none;z-index:50;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 182 230' preserveAspectRatio='xMidYMid meet'><text x='91' y='115' text-anchor='middle' dominant-baseline='middle' transform='rotate(-40 91 115)' font-family='IBM Plex Sans,Helvetica,Arial,sans-serif' font-weight='700' font-size='21' fill='%231F5FA8' fill-opacity='0.13'>ACIP T.I.P. QC SC</text></svg>");background-repeat:repeat-y;background-position:center top;background-size:100% calc(var(--R) * 100cqw);-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .rp .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
 .rp-head{display:flex;gap:12px;align-items:center;border-bottom:2px solid #16202B;padding-bottom:10px;margin-bottom:12px}
 .rp-head img{height:60px;width:auto;flex:0 0 auto}
@@ -46,8 +49,14 @@
 .rp .rp-keep{display:inline-block;width:100%;vertical-align:top}
 .rp .rp-keep.tall{display:block}
 /* a matrix wider than 10 columns prints on its own page, turned 90 degrees (landscape) */
-.rp .rp-land{display:block;position:relative;width:100%;height:238mm;break-before:page;break-after:page;page-break-before:always;page-break-after:always;break-inside:avoid;page-break-inside:avoid}
-.rp .rp-rot{position:absolute;left:0;top:0;width:238mm;transform-origin:0 0;transform:translateY(238mm) rotate(-90deg)}
+.rp .rp-land{display:block;position:relative;width:100%;height:calc(var(--R) * 96cqw);break-before:page;break-after:page;page-break-before:always;page-break-after:always;break-inside:avoid;page-break-inside:avoid}
+/* the turned page: as wide as the page is tall, the table centred both ways */
+.rp .rp-rot{position:absolute;left:0;top:0;width:calc(var(--R) * 96cqw);height:100cqw;transform-origin:0 0;transform:translateY(calc(var(--R) * 96cqw)) rotate(-90deg);display:flex;align-items:center;justify-content:center}
+.rp .rp-rot>.rp-keep{display:block;width:auto}
+/* report.js measures each turned table (--tw, --th: its size in px at a 10px font) and the font is set so
+   it fills the turned page without overflowing, at most 8 pt */
+.rp .rp-rot .mxt{font-size:min(8pt,calc(var(--R) * 900cqw / var(--tw)),calc(840cqw / var(--th)));margin:0}
+.rp .rp-rot .mxt th,.rp .rp-rot .mxt td{font-size:1em;padding:.18em .35em}
 /* diagrams: frames two by two, beams and bars one under another, at a fixed height */
 .rp .mx-dgrid{display:grid;grid-template-columns:1fr 1fr;gap:3mm 6mm}
 .rp .mx-dgrid .mx-panel svg{width:100%;height:auto;max-height:none}

@@ -187,15 +187,17 @@ function keepTables(rp) {
     if (t.rows.length > 40) w.classList.add('tall');
     while (lead(w.previousElementSibling)) w.insertBefore(w.previousElementSibling, w.firstChild);
   });
-  // a matrix wider than 10 columns: its kept block goes on a page of its own, turned 90 degrees; the font
-  // shrinks when it would still not fit (about 18 columns and 34 rows at full size)
+  // a matrix wider than 10 columns: its kept block goes on a page of its own, turned 90 degrees, centred
+  // and scaled to fill that page (print.css sizes the font from the table's measured size)
   rp.querySelectorAll('table.mxt').forEach((t) => {
-    const cols = t.rows.length ? t.rows[0].cells.length - 1 : 0, rows = t.rows.length;
+    const cols = t.rows.length ? t.rows[0].cells.length - 1 : 0;
     if (cols <= 10) return;
     const keep = t.closest('.rp-keep'), land = el('div', 'rp-land'), rot = el('div', 'rp-rot');
     keep.parentNode.insertBefore(land, keep);
     rot.appendChild(keep); land.appendChild(rot);
-    t.style.fontSize = Math.min(6.4, 6.4 * 18 / cols, 6.4 * 34 / rows).toFixed(2) + 'pt';
+    const sz = measureTable(t);
+    t.style.setProperty('--tw', sz.w.toFixed(1));
+    t.style.setProperty('--th', sz.h.toFixed(1));
   });
   rp.querySelectorAll('.mx-panel').forEach((f) => f.classList.add('rp-keep'));
   // a heading left on its own joins the first kept block after it, or is wrapped with the next block
@@ -209,6 +211,18 @@ function keepTables(rp) {
     const w = wrap(hd);
     w.appendChild(n);
   });
+}
+
+// Size of a matrix table in px with a 10px font and the turned-page cell styles, measured off screen.
+function measureTable(t) {
+  const host = el('div', 'rp'), rot = el('div', 'rp-rot'), c = t.cloneNode(true);
+  host.style.cssText = 'position:absolute;left:-20000px;top:0;width:1000px;visibility:hidden';
+  rot.style.cssText = 'position:static;transform:none;width:auto;height:auto;display:block';
+  c.style.fontSize = '10px';
+  rot.appendChild(c); host.appendChild(rot); document.body.appendChild(host);
+  const b = c.getBoundingClientRect();
+  host.remove();
+  return { w: Math.max(b.width, 1), h: Math.max(b.height, 1) };
 }
 
 // Print with a suggested PDF name of <module>-<mode>.pdf.
