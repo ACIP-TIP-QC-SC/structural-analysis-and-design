@@ -7,8 +7,10 @@ function fields(mode, method, val, ed) {
   const q = val.quantity || 'force';
   const f = [{ key: 'quantity', label: 'Quantity (sets the unit shown)', type: 'select', step: 'Loads', default: 'force', wide: true,
     options: [{ value: 'force', label: 'Force' }, { value: 'moment', label: 'Moment' }, { value: 'pressure', label: 'Pressure' }, { value: 'lineload', label: 'Line load' }] }];
-  const defs = { D: 100, L: 60, Lr: 20, R: 0, W: 40, E: 50, H: 0, F: 0, T: 0 };
-  ed.loads.symbols.forEach(([sym, name]) => f.push({ key: sym, label: name, symbol: sym, quantity: q, step: 'Loads', default: defs[sym] }));
+  const defs = { D: 100, L: 60, Lr: 20, R: 0, W: 40, E: 50, H: 0, F: 0, T: 0, Em: 120 };
+  // Special seismic (203.5): only D, L and Em; the other loads are hidden.
+  const syms = mode === 'special' ? ed.loads.symbols.filter(([sym]) => sym === 'D' || sym === 'L').concat([['Em', 'estimated maximum earthquake force (Ω0 Eh)']]) : ed.loads.symbols;
+  syms.forEach(([sym, name]) => f.push({ key: sym, label: name, symbol: sym, quantity: q, step: 'Loads', default: defs[sym] }));
   f.push({ key: 'f1', label: 'Live load factor f1', type: 'select', step: 'Loads', default: 0.5, options: ed.loads.f1Options, wide: true });
   return f;
 }
@@ -33,7 +35,7 @@ function draw(result, o) {
 export default {
   id: 'shared/load-combos', group: 'shared', title: 'Load combinations',
   methods: [],
-  modes: [{ id: 'strength', label: 'Strength', icon: 'combo' }, { id: 'basic', label: 'Allowable basic', icon: 'combo' }, { id: 'alternate', label: 'Allowable alternate', icon: 'combo' }],
+  modes: [{ id: 'strength', label: 'Strength', icon: 'combo' }, { id: 'basic', label: 'Allowable basic', icon: 'combo' }, { id: 'alternate', label: 'Allowable alternate', icon: 'combo' }, { id: 'special', label: 'Special seismic', icon: 'combo' }],
   modeHeading: 'Combination set',
   steps: ['Setup', 'Loads', 'Results'],
   fields, presets, solve, draw,

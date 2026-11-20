@@ -3,6 +3,7 @@
 // To add another edition: copy this file, change the values and clause numbers, and register it
 // in js/codes/index.js. No calculator file changes.
 import theory from './theory.js';
+import SYSTEMS from './nscp2015-systems.js';
 
 const sqrt = Math.sqrt;
 const Es = 200000;
@@ -181,7 +182,24 @@ const concrete = {
     asMin: { fyBreak: 420, below: 0.0020, at: 0.0018, floor: 0.0014 },   // Table 408.6.1.1: 0.0018 x 420 / fy, not less than 0.0014, for fy >= 420 (see AsMinSlabRatio)
     sMax: { timesH: 2, max: 450 }                                       // 408.7.2.2
   },
-  punching: { gammaF: 2 / 3 }                                           // 408.4.2.3.2
+  punching: { gammaF: 2 / 3 },                                          // 408.4.2.3.2
+  prestress: {
+    fpuMax: { strand: 1860, wire: 1725, bar: 1035 },          // Table 420.3.2.2 (p. 4-134)
+    fpyRatio: { 'strand-lr': 0.90, 'strand-sr': 0.85, wire: 0.85, bar: 0.80 },   // typical fpy/fpu choices (ASTM A416M, A421M, A722M); user may type fpy
+    gammaP: [{ min: 0.90, value: 0.28 }, { min: 0.85, value: 0.40 }, { min: 0.80, value: 0.55 }],   // Table 420.3.2.3.1 (fpy/fpu >= min)
+    bonded: { fseMin: 0.5, dPrimeMax: 0.15, bracketMin: 0.17 },   // 420.3.2.3.1 conditions
+    unbonded: { lnh: 35, add: 70, div: [100, 300], cap: [420, 210] },   // Table 420.3.2.4.1 (MPa)
+    jacking: { fpy: 0.94, fpu: 0.80, anchor: 0.70 },          // Table 420.3.2.5.1
+    etyPS: 0.002,                                             // 421.2.2.2: use 0.002 for prestressed reinforcement
+    minFlex: 1.2,                                             // 409.6.2.1: phi Mn >= 1.2 Mcr
+    minUnbonded: 0.004,                                       // 409.6.2.3: As,min = 0.004 Act
+    classes: { U: 0.62, T: 1.0, slabU: 0.5 },                 // Table 424.5.2.1: ft limits x sqrt(f'c)
+    transfer: { compEnd: 0.70, compMid: 0.60, tensEnd: 0.5, tensMid: 0.25 },   // Tables 424.5.3.1, 424.5.3.2 (x f'ci, x sqrt f'ci)
+    service: { sustained: 0.45, total: 0.60, base: 'fc' },   // Table 424.5.4.1 (printed with f'ci; see Section 9.4)
+    shear: { dMin: 0.8, a: 0.05, b: 4.8, c: 0.42, min: 0.17, ratioMax: 1.0, apply: 0.4 },   // 422.5.2.1, Table 422.5.8.2
+    avMin: { a: 0.062, b: 0.35, c: 80 },                      // Table 409.6.3.3
+    spacing: { low: { h: 0.75, max: 600 }, high: { h: 0.375, max: 300 }, Vs: 0.33 }   // 409.7.6.2.2 for prestressed members
+  }
 };
 
 // ---------------------------------------------------------------- WSD (Section 429)
@@ -353,6 +371,30 @@ const steel = {
       sizes: [16, 20, 24, 27, 30, 36, 42, 48] },
     concreteNote: 'Concrete breakout, pullout and embedment are governed by NSCP 2015 Section 417 and are not checked here.',
     scopeNote: 'Axially loaded column base plates. Bases with moment are outside the scope of this calculator.'
+  },
+  composite: {
+    fcRange: [21, 70], FyMax: 525,                            // 509.1.2 (normal-weight concrete)
+    EcCoef: 0.043, wcRange: [1500, 2500],                     // Ec = 0.043 wc^1.5 sqrt(f'c), MPa
+    C2: { rect: 0.85, round: 0.95 },                          // 509.1.1.1, Eq. 509.2-13
+    encased: { AsMin: 0.01, rhoSrMin: 0.004, tieArea: 6, barsMin: 4, cover: 40, connector: 400,
+               C1: { a: 0.1, b: 2, max: 0.3 }, EIsr: 0.5, tie: { db: 16, dt: 48, dim: 0.5 } },   // 509.2.1
+    filled: { AsMin: 0.01, rectBt: 2.26, roundDt: 0.15, C3: { a: 0.6, b: 2, max: 0.9 } },        // 509.2.2
+    column: { phi: 0.75, omega: 2.00, Pe: 0.44, base: 0.658, elastic: 0.877 },   // Eqs. 509.2-2, 509.2-3
+    tension: { phi: 0.90, omega: 1.67 },
+    beam: { phi: 0.90, omega: 1.67, webPlastic: 3.76, beDiv: 8, setup: 0.75 },   // 509.3.1.1, 509.3.1.3, 509.3.2.1
+    encasedFlex: { phi: 0.90, omega: 1.67, phiPlastic: 0.85, omegaPlastic: 1.76 },   // 509.4
+    deck: { hrMax: 75, wrMin: 50, studDiaMax: 20, aboveDeck: 40, coverAbove: 12, slabAbove: 50 },   // 509.3.2.3
+    stud: { qn: 0.5, diaFlange: 2.5, minLong: 6, minTrans: 4, maxSlab: 8, lateralCover: 25 },       // Eq. 509.3-3, 509.3.2.4
+    RgRp: {                                                    // User note table to 509.3.2.4 (checked on the image)
+      none:          { Rg: 1.0, Rp: 1.0 },
+      parallelWide:  { Rg: 1.0, Rp: 0.75 },                    // deck parallel, wr/hr >= 1.5
+      parallelNarrow:{ Rg: 0.85, Rp: 0.75 },                   // deck parallel, wr/hr < 1.5
+      perp1:         { Rg: 1.0, Rp: 0.6 },                     // ribs perpendicular, 1 stud per rib
+      perp2:         { Rg: 0.85, Rp: 0.6 },                    // 2 studs per rib
+      perp3:         { Rg: 0.70, Rp: 0.6 },                    // 3 or more studs per rib
+      RpEmid: 0.75, emid: 50                                   // perpendicular: Rp = 0.75 when e_mid-ht >= 50 mm
+    },
+    channel: 0.3                                               // Eq. 509.3-4: Qn = 0.3 (tf + 0.5tw) La sqrt(f'c Ec)
   }
 };
 
@@ -387,6 +429,98 @@ const found = {
   }
 };
 
+// ---------------------------------------------------------------- wind (Sec. 207A, 207B Part 1), SI
+const wind = {
+  rho: 0.613,                                        // Eq. 207B.3-1: qz = 0.613 Kz Kzt Kd V² (N/m², V in m/s)
+  Kd: [                                              // Table 207A.6-1 (p. 2-42)
+    { id: 'building', label: 'Buildings, main wind-force resisting system', value: 0.85 },
+    { id: 'cc', label: 'Buildings, components and cladding', value: 0.85 },
+    { id: 'arched', label: 'Arched roofs', value: 0.85 },
+    { id: 'chimSquare', label: 'Chimneys, tanks: square', value: 0.90 },
+    { id: 'chimHex', label: 'Chimneys, tanks: hexagonal', value: 0.95 },
+    { id: 'chimRound', label: 'Chimneys, tanks: round', value: 0.95 },
+    { id: 'signSolid', label: 'Solid freestanding walls and signs', value: 0.85 },
+    { id: 'signOpen', label: 'Open signs and lattice framework', value: 0.85 },
+    { id: 'towerTri', label: 'Trussed towers: triangular, square, rectangular', value: 0.85 },
+    { id: 'towerOther', label: 'Trussed towers: all other cross sections', value: 0.95 }
+  ],
+  terrain: { B: { alpha: 7.0, zg: 365.76 }, C: { alpha: 9.5, zg: 274.32 }, D: { alpha: 11.5, zg: 213.36 } },  // Table 207A.9-1
+  KzFormula: { coef: 2.01, zmin: 4.5 },              // Table 207B.3-1 note: Kz = 2.01 (z/zg)^(2/alpha), z >= 4.5 m
+  KzTable: {                                         // Table 207B.3-1 (p. 2-68), z in m
+    z: [4.5, 6, 7.5, 9, 12, 15, 18, 21, 24, 27, 30, 36, 42, 48, 54, 60, 75, 90, 105, 120, 135, 150],
+    B: [0.57, 0.62, 0.66, 0.70, 0.76, 0.81, 0.85, 0.89, 0.93, 0.96, 0.99, 1.04, 1.09, 1.13, 1.17, 1.20, 1.28, 1.35, 1.41, 1.47, 1.52, 1.56],
+    C: [0.85, 0.90, 0.94, 0.98, 1.04, 1.09, 1.13, 1.17, 1.21, 1.24, 1.26, 1.31, 1.36, 1.39, 1.43, 1.46, 1.53, 1.59, 1.64, 1.69, 1.73, 1.77],
+    D: [1.03, 1.08, 1.12, 1.16, 1.22, 1.27, 1.31, 1.34, 1.38, 1.40, 1.43, 1.48, 1.52, 1.55, 1.58, 1.61, 1.68, 1.73, 1.78, 1.82, 1.86, 1.89]
+  },
+  topo: {                                            // Fig. 207A.8-1 (p. 2-50)
+    ridge:      { k1: { B: 1.30, C: 1.45, D: 1.55 }, gamma: 3.0, muUp: 1.5, muDown: 1.5 },
+    escarpment: { k1: { B: 0.75, C: 0.85, D: 0.95 }, gamma: 2.5, muUp: 1.5, muDown: 4.0 },
+    hill:       { k1: { B: 0.95, C: 1.05, D: 1.15 }, gamma: 4.0, muUp: 1.5, muDown: 1.5 },
+    HLmax: 0.5,                                      // note 2: H/Lh > 0.5 -> use 0.5 for K1 and Lh = 2H for K2, K3
+    HLmin: 0.2, Hmin: { B: 18, C: 4.5, D: 4.5 }      // 207A.8.1: Kzt = 1.0 unless H/Lh >= 0.2 and H >= these (m)
+  },
+  G: 0.85,                                           // 207A.9.1, rigid building
+  GCpi: { open: 0.00, partial: 0.55, enclosed: 0.18 },   // Table 207A.11-1 (+ and -)
+  CpWall: { windward: 0.8, side: -0.7, leeward: { LB: [1, 2, 4], Cp: [-0.5, -0.3, -0.2] } },   // Fig. 207B.4-1 (p. 2-74)
+  CpRoof: {                                          // Fig. 207B.4-1 (p. 2-74); null = blank cell (0.0 for interpolation)
+    hL: [0.25, 0.5, 1.0],                            // the third row is printed ">= 10" (misprint for >= 1.0)
+    theta: [10, 15, 20, 25, 30, 35, 45, 60],
+    windA: [[-0.7, -0.5, -0.3, -0.2, -0.2, 0.0, null, null], [-0.9, -0.7, -0.4, -0.3, -0.2, -0.2, 0.0, null], [-1.3, -1.0, -0.7, -0.5, -0.3, -0.2, 0.0, null]],
+    windB: [[-0.18, 0.0, 0.2, 0.3, 0.3, 0.4, 0.4, 'th'], [-0.18, -0.18, 0.0, 0.2, 0.2, 0.3, 0.4, 'th'], [-0.18, -0.18, -0.18, 0.0, 0.2, 0.2, 0.3, 'th']],   // 'th' = 0.01 theta
+    leeTheta: [10, 15, 20], lee: [[-0.3, -0.5, -0.6], [-0.5, -0.5, -0.6], [-0.7, -0.6, -0.6]],
+    flat: {                                          // theta < 10 normal to ridge, and parallel to ridge for all theta
+      edges: [0, 0.5, 1, 2],                         // zone starts as multiples of h from the windward edge
+      low: [-0.9, -0.9, -0.5, -0.3],                 // h/L <= 0.5, first value
+      high: [-1.3, -0.7, -0.7, -0.7],                // h/L >= 1.0, first value
+      second: -0.18,                                 // second value of every cell
+      reduce: { area: [9.3, 23.2, 92.9], factor: [1.0, 0.9, 0.8] }   // ** reduction of -1.3 with zone area (m²)
+    },
+    steep: { theta: 80, Cp: 0.8 }                    // note: roof slope > 80 degrees uses Cp = 0.8
+  },
+  cases: { case2: 0.75, ecc: 0.15, case4: 0.563 },   // Fig. 207B.4-8 (p. 2-79)
+  minimum: { wall: 0.77, roof: 0.38 }                // 207B.4.7: kPa on wall area and on roof area projected on a vertical plane
+};
+
+// ---------------------------------------------------------------- seismic (Sec. 208), SI
+const seismic = {
+  g: 9.815,                                          // 208.5.2.2 (m/s²)
+  zones: { 2: 0.20, 4: 0.40 },                       // 208.4.4.1, Table 208-3
+  zone2Note: 'Zone 2: Palawan (except Busuanga), Sulu and Tawi-Tawi. Zone 4: everywhere else in the Philippines.',
+  importance: {                                      // Table 208-1 (p. 2-185): I, Ip
+    I:   { label: 'I. Essential facilities', I: 1.50, Ip: 1.50 },
+    II:  { label: 'II. Hazardous facilities', I: 1.25, Ip: 1.50 },
+    III: { label: 'III. Special occupancy structures', I: 1.00, Ip: 1.00 },
+    IV:  { label: 'IV. Standard occupancy structures', I: 1.00, Ip: 1.00 },
+    V:   { label: 'V. Miscellaneous structures', I: 1.00, Ip: 1.00 }
+  },
+  soils: ['SA', 'SB', 'SC', 'SD', 'SE'],             // Table 208-2; SF needs a site-specific evaluation
+  soilUnknown: { 4: 'SD', 2: 'SD' },                 // 208.4.3 (static and dynamic)
+  soilUnknownSimplified: { 4: 'SD', 2: 'SE' },       // 208.5.1.1 (as printed; confirmed on the page image)
+  Ca: { 2: { SA: 0.16, SB: 0.20, SC: 0.24, SD: 0.28, SE: 0.34 }, 4: { SA: 0.32, SB: 0.40, SC: 0.40, SD: 0.44, SE: 0.44 } },  // Table 208-7, x Na in Zone 4
+  Cv: { 2: { SA: 0.16, SB: 0.20, SC: 0.32, SD: 0.40, SE: 0.64 }, 4: { SA: 0.32, SB: 0.40, SC: 0.56, SD: 0.64, SE: 0.96 } },  // Table 208-8, x Nv in Zone 4
+  Na: { km: [2, 5, 10], A: [1.5, 1.2, 1.0], B: [1.3, 1.0, 1.0], C: [1.0, 1.0, 1.0] },             // Table 208-5, linear interpolation
+  Nv: { km: [2, 5, 10, 15], A: [2.0, 1.6, 1.2, 1.0], B: [1.6, 1.2, 1.0, 1.0], C: [1.0, 1.0, 1.0, 1.0] },   // Table 208-6
+  NaCapSimplified: 1.2,                              // 208.5.1.1: Na need not exceed 1.2 without the listed irregularities
+  NaCapRegular: 1.1,                                 // Table 208-5 note: Na for Ca need not exceed 1.1 when all listed conditions hold
+  sources: { A: 'A: M 7.0 to 8.4, high slip rate', B: 'B: M 6.5 to 7.0 (faults other than A and C)', C: 'C: M below 6.5, low slip rate' },  // Table 208-4
+  Ct: { 'steel-mrf': 0.0853, 'rc-mrf': 0.0731, other: 0.0488 },   // 208.5.2.2 Method A (rc-mrf includes eccentrically braced steel frames)
+  CtWalls: { coef: 0.0743, De_hn_max: 0.9, base: 0.2 },            // Ct = 0.0743/sqrt(Ac), Ac = sum Ae[0.2 + (De/hn)²]
+  periodBCap: { 4: 1.30, 2: 1.40 },                  // Method B not more than 30% (Zone 4) or 40% (Zone 2) above Method A
+  base: { cap: 2.5, min: 0.11, min4: 0.8 },          // Eqs. 208-9, 208-10, 208-11
+  spectrum: { To: 0.2 },                             // Fig. 208-3: To = 0.2 Ts, Ts = Cv/2.5Ca (added beside the hand-off block)
+  simplified: { coef: 3.0, drift: 0.01 },            // Eqs. 208-5, 208-6; 208.5.1.6
+  Ft: { T0: 0.7, coef: 0.07, max: 0.25 },            // Eq. 208-16
+  rho: { a: 2, b: 6.1, min: 1.0, max: 1.5, smrf: 1.25, dual: 0.8 },   // Eq. 208-20 and 208.6.1
+  Ev: 0.5,                                           // Ev = 0.5 Ca I D (strength design); 0 for allowable stress design
+  drift: { DM: 0.7, Tbreak: 0.7, limShort: 0.025, limLong: 0.020, compat: 0.0025 },   // 208.6.4.2, 208.6.5.1, 208.7.2.3
+  pdelta: { ratio: 0.10, zone4: 0.02 },              // 208.6.3: ignore when ratio <= 0.10, or in Zone 4 when drift ratio <= 0.02/R
+  accidental: 0.05, amplifyMax: 3.0,                 // 208.5.1.3, Eq. 208-7
+  cantilever: 0.7,                                   // 208.6.6: net upward 0.7 Ca I Wp (Zone 4)
+  orthogonal: 0.30,                                  // 208.7.1
+  procedure: { staticMaxH: 75, irregMaxStoreys: 5, irregMaxH: 20, simplifiedLight: 3, simplifiedOther: 2 },   // 208.4.8
+  systems: SYSTEMS                                   // Table 208-11A to D (R, Omega0, height limits), js/codes/nscp2015-systems.js
+};
+
 // ---------------------------------------------------------------- clause map
 // nscp: NSCP 2015 clause. src: clause of the reference code shown second (null = NSCP only).
 // text: plain chip text for steps with no code basis.
@@ -394,6 +528,9 @@ const ACI = 'ACI 318-14', AISC = 'AISC 360';
 const c4 = (nscp, src) => ({ nscp, src, code: ACI });
 const c5 = (nscp, src) => ({ nscp, src, code: AISC });
 const only = (nscp) => ({ nscp, src: null, code: null });
+const ASCE7 = 'ASCE 7-10', UBC = 'UBC-1997';
+const c7 = (nscp, src) => ({ nscp, src, code: ASCE7 });
+const cU = (nscp, src) => ({ nscp, src, code: UBC });
 const clauses = {
   'mat.Ec': c4('419.2.2.1', '19.2.2.1'),
   'mat.Es': c4('420.2.2.2', '20.2.2.2'),
@@ -623,7 +760,97 @@ const clauses = {
   'basic.statics': { text: 'Statics' },
   'basic.geometry': { text: 'Geometry' },
   'basic.section': { text: 'Section properties' },
-  'basic.design': { text: 'Design aid' }
+  'basic.design': { text: 'Design aid' },
+  // ---- wind (207A, 207B = ASCE 7-10 Ch. 26, 27)
+  'wind.speed': c7('207A.5.1', '26.5.1'),
+  'wind.Kd': c7('Table 207A.6-1', 'Table 26.6-1'),
+  'wind.exposure': c7('207A.7.3', '26.7.3'),
+  'wind.Kzt': c7('207A.8.2', '26.8.2'),
+  'wind.KztFig': c7('Fig. 207A.8-1', 'Fig. 26.8-1'),
+  'wind.G': c7('207A.9.1', '26.9.1'),
+  'wind.terrain': c7('Table 207A.9-1', 'Table 26.9-1'),
+  'wind.enclosure': c7('207A.10', '26.10'),
+  'wind.GCpi': c7('Table 207A.11-1', 'Table 26.11-1'),
+  'wind.Kz': c7('Table 207B.3-1', 'Table 27.3-1'),
+  'wind.qz': c7('Eq. 207B.3-1', 'Eq. 27.3-1'),
+  'wind.p': c7('Eq. 207B.4-1', 'Eq. 27.4-1'),
+  'wind.Cp': c7('Fig. 207B.4-1', 'Fig. 27.4-1'),
+  'wind.cases': c7('Fig. 207B.4-8', 'Fig. 27.4-8'),
+  'wind.minimum': c7('207B.4.7', '27.4.7'),
+  // ---- seismic (208 = UBC-1997 Ch. 16 Div. IV)
+  'seis.importance': cU('Table 208-1', 'Table 16-K'),
+  'seis.soil': cU('Table 208-2', 'Table 16-J'),
+  'seis.soilUnknown': cU('208.4.3', '1629.3.1'),
+  'seis.zone': cU('208.4.4.1, Table 208-3', 'Table 16-I'),
+  'seis.source': cU('Table 208-4', 'Table 16-U'),
+  'seis.Na': cU('Table 208-5', 'Table 16-S'),
+  'seis.Nv': cU('Table 208-6', 'Table 16-T'),
+  'seis.Ca': cU('Table 208-7', 'Table 16-Q'),
+  'seis.Cv': cU('Table 208-8', 'Table 16-R'),
+  'seis.procedure': cU('208.4.8', '1629.8'),
+  'seis.system': cU('Table 208-11', 'Table 16-N'),
+  'seis.simplified': cU('Eqs. 208-5, 208-6', 'Eqs. 30-11, 30-12'),
+  'seis.V': cU('Eq. 208-8', 'Eq. 30-4'),
+  'seis.Vmax': cU('Eq. 208-9', 'Eq. 30-5'),
+  'seis.Vmin': cU('Eq. 208-10', 'Eq. 30-6'),
+  'seis.Vmin4': cU('Eq. 208-11', 'Eq. 30-7'),
+  'seis.period': cU('Eq. 208-12', 'Eq. 30-8'),
+  'seis.periodB': cU('208.5.2.2', '1630.2.2'),
+  'seis.Ft': cU('Eq. 208-16', 'Eq. 30-14'),
+  'seis.Fx': cU('Eq. 208-17', 'Eq. 30-15'),
+  'seis.E': cU('Eq. 208-18', 'Eq. 30-1'),
+  'seis.Em': cU('Eq. 208-19', 'Eq. 30-2'),
+  'seis.rho': cU('Eq. 208-20', 'Eq. 30-3'),
+  'seis.drift': cU('208.6.4.2, 208.6.5', '1630.9.2, 1630.10'),
+  'seis.driftSimple': cU('208.5.1.6', '1630.2.3.4'),
+  'seis.torsion': cU('208.5.1.3, 208.5.1.4', '1630.6, 1630.7'),
+  'seis.pdelta': cU('208.6.3', '1630.1.3'),
+  // ---- composite (509 = AISC 360-05 Ch. I)
+  'comp.materials': c5('509.1.2', 'I1.2'),
+  'comp.Ec': c5('509.1.2', 'I2.1b'),
+  'comp.encLimits': c5('509.2.1.1', 'I2.1a'),
+  'comp.encStrength': c5('Eqs. 509.2-2 to 509.2-7', 'Eqs. I2-2 to I2-7'),
+  'comp.encTension': c5('Eq. 509.2-8', 'Eq. I2-8'),
+  'comp.encDetail': c5('509.2.1.6', 'I2.1f'),
+  'comp.fillLimits': c5('509.2.2.1', 'I2.2a'),
+  'comp.fillStrength': c5('Eqs. 509.2-13 to 509.2-15', 'Eqs. I2-13 to I2-15'),
+  'comp.beWidth': c5('509.3.1.1', 'I3.1a'),
+  'comp.construction': c5('509.3.1.3', 'I3.1c'),
+  'comp.positive': c5('509.3.2.1', 'I3.2a'),
+  'comp.deck': c5('509.3.2.3', 'I3.2c'),
+  'comp.shear': c5('509.3.2.4', 'I3.2d'),
+  'comp.Vprime': c5('Eqs. 509.3-1a to 509.3-1c', 'Eqs. I3-1a to I3-1c'),
+  'comp.Qn': c5('Eq. 509.3-3', 'Eq. I3-3'),
+  'comp.studs': c5('509.3.2.4', 'I3.2d(6)'),
+  // ---- prestressed (ACI 318-14)
+  'ps.fpu': c4('Table 420.3.2.2', 'Table 20.3.2.2'),
+  'ps.fpsBonded': c4('420.3.2.3.1', '20.3.2.3.1'),
+  'ps.gammaP': c4('Table 420.3.2.3.1', 'Table 20.3.2.3.1'),
+  'ps.fpsUnbonded': c4('Table 420.3.2.4.1', 'Table 20.3.2.4.1'),
+  'ps.jacking': c4('Table 420.3.2.5.1', 'Table 20.3.2.5.1'),
+  'ps.losses': c4('420.3.2.6.1', '20.3.2.6.1'),
+  'ps.phi': c4('421.2.2.2', '21.2.2.2'),
+  'ps.minFlex': c4('409.6.2.1', '9.6.2.1'),
+  'ps.minFlexWaiver': c4('409.6.2.2', '9.6.2.2'),
+  'ps.minUnbonded': c4('409.6.2.3', '9.6.2.3'),
+  'ps.Mcr': c4('424.2.3.9', '24.2.3.9'),
+  'ps.class': c4('Table 424.5.2.1', 'Table 24.5.2.1'),
+  'ps.transferComp': c4('Table 424.5.3.1', 'Table 24.5.3.1'),
+  'ps.transferTens': c4('Table 424.5.3.2', 'Table 24.5.3.2'),
+  'ps.serviceComp': c4('Table 424.5.4.1', 'Table 24.5.4.1'),
+  'ps.shearD': c4('422.5.2.1', '22.5.2.1'),
+  'ps.Vc': c4('Table 422.5.8.2', 'Table 22.5.8.2'),
+  'ps.Avmin': c4('Table 409.6.3.3', 'Table 9.6.3.3'),
+  'ps.spacing': c4('409.7.6.2.2', '9.7.6.2.2'),
+  // ---- settlement and loads
+  'found.settleTests': only('303.6'),
+  'found.settleReport': only('303.7'),
+  'found.settleDiff': only('305.2'),
+  'theory.settleElastic': { text: 'Elastic settlement (Steinbrenner; Das, Principles of Foundation Engineering, Ch. 9)' },
+  'theory.settleConsol': { text: 'Primary consolidation settlement (Das Ch. 9)' },
+  'theory.stress': { text: 'Stress increase below a loaded area (Boussinesq; 2:1 method)' },
+  'theory.prestress': { text: 'Stresses in prestressed members (mechanics of materials)' },
+  'loads.special': only('203.5')
 };
 
 export default {
@@ -632,5 +859,5 @@ export default {
   short: 'NSCP 2015',
   enabled: true,
   sources: { concrete: 'ACI 318-14', steel: 'AISC 360', loads: 'ASCE/SEI 7', legacy: ['UBC-1997', 'IBC-2009'] },
-  concrete, wsd, steel, found, loads, theory, clauses
+  concrete, wsd, steel, found, loads, wind, seismic, theory, clauses
 };

@@ -1,0 +1,421 @@
+{
+ "module": "shared/seismic",
+ "calc": "js/modules/shared/seismic.calc.js",
+ "cases": [
+  {
+   "id": "SM-1",
+   "name": "Test: static force, Zone 4, SD, source A at 5 km, RC SMRF, hn 18 m",
+   "method": null,
+   "input": {
+    "mode": "static",
+    "zone": 4,
+    "soil": "SD",
+    "occupancy": "IV",
+    "source": "A",
+    "dist": 5,
+    "system": "A-C1",
+    "ct": "rc-mrf",
+    "hn": 18,
+    "W": 20000
+   },
+   "expect": {
+    "Na": 1.2,
+    "Nv": 1.6,
+    "Ca": 0.528,
+    "Cv": 1.024,
+    "I": 1,
+    "TA": 0.638810073212496,
+    "T": 0.638810073212496,
+    "V8": 3771.718489956258,
+    "V9": 3105.8823529411766,
+    "V10": 1161.6,
+    "V11": 1204.7058823529414,
+    "V": 3105.8823529411766,
+    "VW": 0.15529411764705883,
+    "Eh": 3105.8823529411766,
+    "Em": 8696.470588235294
+   },
+   "pass": null,
+   "governing": "Eq. 208-9"
+  },
+  {
+   "id": "SM-2",
+   "name": "Test: static force, essential facility, steel SMRF, hn 40 m",
+   "method": null,
+   "input": {
+    "mode": "static",
+    "zone": 4,
+    "soil": "SC",
+    "occupancy": "I",
+    "source": "B",
+    "dist": 8,
+    "system": "B-C1",
+    "ct": "steel-mrf",
+    "hn": 40,
+    "W": 50000
+   },
+   "expect": {
+    "Na": 1,
+    "Nv": 1.08,
+    "Ca": 0.4,
+    "Cv": 0.6048000000000001,
+    "I": 1.5,
+    "TA": 1.3567318632765883,
+    "T": 1.3567318632765883,
+    "V8": 4179.160343670719,
+    "V9": 9375,
+    "V10": 3300,
+    "V11": 3240.0000000000005,
+    "V": 4179.160343670719,
+    "VW": 0.08358320687341439,
+    "Ft": 396.90000000000015
+   },
+   "pass": null,
+   "governing": "Eq. 208-8"
+  },
+  {
+   "id": "SM-3",
+   "name": "Test: vertical distribution, 5 storeys (Ft = 0)",
+   "method": null,
+   "input": {
+    "mode": "distribution",
+    "zone": 4,
+    "soil": "SD",
+    "occupancy": "IV",
+    "source": "C",
+    "dist": 20,
+    "ct": "rc-mrf",
+    "levels": [
+     {
+      "h": 3.5,
+      "w": 1000
+     },
+     {
+      "h": 7,
+      "w": 1000
+     },
+     {
+      "h": 10.5,
+      "w": 1000
+     },
+     {
+      "h": 14,
+      "w": 1000
+     },
+     {
+      "h": 17.5,
+      "w": 800
+     }
+    ],
+    "system": "A-C1"
+   },
+   "expect": {
+    "Na": 1,
+    "Nv": 1,
+    "Ca": 0.44,
+    "Cv": 0.64,
+    "I": 1,
+    "TA": 0.6254547764498471,
+    "T": 0.6254547764498471,
+    "V8": 577.8383638818731,
+    "V9": 621.1764705882352,
+    "V10": 232.32,
+    "V11": 180.70588235294122,
+    "V": 577.8383638818731,
+    "VW": 0.12038299247539022,
+    "Ft": 0,
+    "Mot": 7222.9795485234135,
+    "levels.0.F": 41.27416884870522,
+    "levels.0.V": 577.8383638818732,
+    "levels.1.F": 82.54833769741045,
+    "levels.1.V": 536.564195033168,
+    "levels.2.F": 123.82250654611566,
+    "levels.2.V": 454.01585733575746,
+    "levels.3.F": 165.0966753948209,
+    "levels.3.V": 330.1933507896418,
+    "levels.4.F": 165.0966753948209,
+    "levels.4.V": 165.0966753948209
+   },
+   "pass": null
+  },
+  {
+   "id": "SM-4",
+   "name": "Test: vertical distribution with Ft, 8 storeys, source B at 3 km",
+   "method": null,
+   "input": {
+    "mode": "distribution",
+    "zone": 4,
+    "soil": "SD",
+    "occupancy": "IV",
+    "source": "B",
+    "dist": 3,
+    "ct": "steel-mrf",
+    "levels": [
+     {
+      "h": 4,
+      "w": 1200
+     },
+     {
+      "h": 8,
+      "w": 1200
+     },
+     {
+      "h": 12,
+      "w": 1200
+     },
+     {
+      "h": 16,
+      "w": 1200
+     },
+     {
+      "h": 20,
+      "w": 1200
+     },
+     {
+      "h": 24,
+      "w": 1200
+     },
+     {
+      "h": 28,
+      "w": 1200
+     },
+     {
+      "h": 32,
+      "w": 900
+     }
+    ],
+    "system": "B-C1"
+   },
+   "expect": {
+    "Na": 1.2,
+    "Nv": 1.4666666666666668,
+    "Ca": 0.528,
+    "Cv": 0.9386666666666668,
+    "I": 1,
+    "TA": 1.1476554275382695,
+    "T": 1.1476554275382695,
+    "V8": 950.8080333316012,
+    "V9": 1534.5,
+    "V10": 540.144,
+    "V11": 545.6000000000001,
+    "V": 950.8080333316012,
+    "VW": 0.10223742293888186,
+    "Ft": 76.38400000000001,
+    "levels.7.Ftotal": 230.69412352910612,
+    "levels.0.F": 25.718353921517682,
+    "levels.0.V": 950.8080333316012,
+    "Mot": 21784.4901489813
+   },
+   "pass": null
+  },
+  {
+   "id": "SM-5",
+   "name": "Test: static force, Zone 2, RC IMRF",
+   "method": null,
+   "input": {
+    "mode": "static",
+    "zone": 2,
+    "soil": "SD",
+    "occupancy": "IV",
+    "ct": "rc-mrf",
+    "hn": 12,
+    "W": 10000,
+    "system": "A-C2"
+   },
+   "expect": {
+    "Na": 1,
+    "Nv": 1,
+    "Ca": 0.28,
+    "Cv": 0.4,
+    "I": 1,
+    "TA": 0.47130637209780546,
+    "T": 0.47130637209780546,
+    "V8": 1543.0997124770545,
+    "V9": 1272.727272727273,
+    "V10": 308.00000000000006,
+    "V11": 0,
+    "V": 1272.727272727273,
+    "VW": 0.1272727272727273
+   },
+   "pass": null
+  },
+  {
+   "id": "SM-6",
+   "name": "Test: simplified static, 2-storey bearing-wall building, soil unknown",
+   "method": null,
+   "input": {
+    "mode": "simplified",
+    "zone": 4,
+    "soil": "unknown",
+    "source": "C",
+    "dist": 20,
+    "levels": [
+     {
+      "h": 3,
+      "w": 1200
+     },
+     {
+      "h": 6,
+      "w": 1000
+     }
+    ],
+    "system": "A-A1"
+   },
+   "expect": {
+    "soilUsed": "SD",
+    "Ca": 0.44,
+    "V": 645.3333333333334,
+    "levels.0.F": 352,
+    "levels.1.F": 293.3333333333333
+   },
+   "pass": null
+  },
+  {
+   "id": "SM-7",
+   "name": "Test: storey drift, passes",
+   "method": null,
+   "input": {
+    "mode": "drift",
+    "T": 0.644,
+    "levels": [
+     {
+      "h": 3.5,
+      "dS": 5
+     },
+     {
+      "h": 7,
+      "dS": 11
+     },
+     {
+      "h": 10.5,
+      "dS": 16
+     },
+     {
+      "h": 14,
+      "dS": 20
+     },
+     {
+      "h": 17.5,
+      "dS": 23
+     }
+    ],
+    "system": "A-C1"
+   },
+   "expect": {
+    "limit": 87.5,
+    "dcMax": 0.408,
+    "levels.0.dS": 5,
+    "levels.0.dM": 29.749999999999996,
+    "levels.1.dS": 6,
+    "levels.1.dM": 35.699999999999996,
+    "levels.2.dS": 5,
+    "levels.2.dM": 29.749999999999996,
+    "levels.3.dS": 4,
+    "levels.3.dM": 23.799999999999997,
+    "levels.4.dS": 3,
+    "levels.4.dM": 17.849999999999998
+   },
+   "pass": true
+  },
+  {
+   "id": "SM-8",
+   "name": "Test: storey drift, fails on purpose",
+   "method": null,
+   "input": {
+    "mode": "drift",
+    "T": 0.644,
+    "levels": [
+     {
+      "h": 3.5,
+      "dS": 10
+     },
+     {
+      "h": 7,
+      "dS": 26
+     },
+     {
+      "h": 10.5,
+      "dS": 40
+     },
+     {
+      "h": 14,
+      "dS": 52
+     },
+     {
+      "h": 17.5,
+      "dS": 60
+     }
+    ],
+    "system": "A-C1"
+   },
+   "expect": {
+    "limit": 87.5,
+    "dcMax": 1.0879999999999999,
+    "levels.0.dS": 10,
+    "levels.0.dM": 59.49999999999999,
+    "levels.1.dS": 16,
+    "levels.1.dM": 95.19999999999999,
+    "levels.2.dS": 14,
+    "levels.2.dM": 83.29999999999998,
+    "levels.3.dS": 12,
+    "levels.3.dM": 71.39999999999999,
+    "levels.4.dS": 8,
+    "levels.4.dM": 47.599999999999994
+   },
+   "pass": false
+  },
+  {
+   "id": "SM-9a",
+   "name": "Test: redundancy factor, rmax 0.3, AB 400 m² (rho = 1.0)",
+   "method": null,
+   "input": {
+    "mode": "static",
+    "zone": 4,
+    "soil": "SD",
+    "occupancy": "IV",
+    "source": "A",
+    "dist": 5,
+    "system": "A-C1",
+    "ct": "rc-mrf",
+    "hn": 18,
+    "W": 20000,
+    "rmax": 0.3,
+    "AB": 400,
+    "D": 1000
+   },
+   "expect": {
+    "rhoRaw": 0.9833333333333334,
+    "rho": 1,
+    "rhoEh": 3105.8823529411766,
+    "Ev": 264
+   },
+   "pass": null
+  },
+  {
+   "id": "SM-9b",
+   "name": "Test: redundancy factor above the SMRF cap (rho = 1.25)",
+   "method": null,
+   "input": {
+    "mode": "static",
+    "zone": 4,
+    "soil": "SD",
+    "occupancy": "IV",
+    "source": "A",
+    "dist": 5,
+    "system": "A-C1",
+    "ct": "rc-mrf",
+    "hn": 18,
+    "W": 20000,
+    "rmax": 0.5,
+    "AB": 300
+   },
+   "expect": {
+    "rhoRaw": 1.2956326715886566,
+    "rho": 1.25,
+    "rhoEh": 3882.3529411764707,
+    "Ev": 0
+   },
+   "pass": null
+  }
+ ]
+}

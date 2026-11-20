@@ -32,7 +32,13 @@ export const QUANTITIES = {
   rotation:     { si: 'rad',      us: 'rad',        f: 1 },
   stiffness:    { si: 'kN/m',     us: 'kip/in',     f: 4.4482216 / 0.0254 },
   rotstiffness: { si: 'kN·m/rad', us: 'kip·ft/rad', f: 1.3558179 },
-  text:         { si: '',       us: '',          f: 1 }
+  text:         { si: '',       us: '',          f: 1 },
+  // Wind and seismic loads, composite and prestressed (hand-off Later 4.1).
+  speed_kph:   { si: 'km/h',  us: 'mph',   f: 1.609344 },      // basic wind speed V
+  pressure_lo: { si: 'kPa',   us: 'psf',   f: 0.04788026 },    // wind pressures (ksf is too coarse)
+  time_s:      { si: 's',     us: 's',     f: 1 },             // period T
+  dist_km:     { si: 'km',    us: 'mi',    f: 1.609344 },      // distance to the seismic source
+  density:     { si: 'kg/m³', us: 'pcf',   f: 16.018463 }       // concrete density wc
 };
 
 export const SYSTEMS = { SI: 'SI (mm, MPa, kN·m)', US: 'English (in, ksi, kip·ft)' };

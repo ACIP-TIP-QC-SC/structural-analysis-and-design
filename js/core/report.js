@@ -29,7 +29,8 @@ export function solutionText(r) {
   r.inputs.forEach((i) => L.push('  ' + i.label + ': ' + i.value));
   L.push('');
   if (res.ok) {
-    if (res.verdict && res.verdict.line != null) L.push('RESULT: ' + res.verdict.line, '');
+    if (res.verdict && res.verdict.pass == null) { /* information only: no verdict line */ }
+    else if (res.verdict && res.verdict.line != null) L.push('RESULT: ' + res.verdict.line, '');
     else if (res.verdict) L.push('VERDICT: ' + (res.verdict.pass ? 'ADEQUATE' : 'NOT ADEQUATE') + ' (governing: ' + res.verdict.governing + ', D/C = ' + fmtDC(res.verdict.dc) + ')', '');
     if (res.checks.length) {
       L.push('CHECKS');
@@ -107,6 +108,8 @@ export function buildReport(r, svg) {
   tt.appendChild(left);
   if (!res.ok) {
     const vb = el('div', 'rp-v fail'); vb.appendChild(el('div', 'w', 'CHECK THE INPUTS')); tt.appendChild(vb);
+  } else if (res.verdict && res.verdict.pass == null) {
+    // information only (pass null): no verdict box
   } else if (res.verdict && res.verdict.line != null) {
     // analysis modules: their own banner word and line
     const vb = el('div', 'rp-v' + (res.verdict.pass ? '' : ' fail'));

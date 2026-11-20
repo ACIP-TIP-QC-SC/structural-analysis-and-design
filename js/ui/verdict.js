@@ -20,7 +20,9 @@ export function verdictBanner(result) {
   if (!result.ok) {
     return h('div', { class: 'err o-verdict', role: 'alert' }, h('strong', null, 'Check the inputs. '), result.errors.join(' '));
   }
-  if (!result.verdict) return null;
+  // A verdict with pass null carries information only (for example the governing equation of a load
+  // calculation): no ADEQUATE / NOT ADEQUATE banner.
+  if (!result.verdict || result.verdict.pass == null) return null;
   const pass = result.verdict.pass;
   const el = h('div', { class: 'verdict o-verdict ' + (pass ? 'pass' : 'fail'), role: 'status' });
   el.innerHTML = pass ? CHECK : CROSS;
@@ -33,7 +35,7 @@ export function verdictBanner(result) {
 export function stickyStrip(result) {
   const el = h('div', { class: 'stick', 'aria-hidden': 'true' });
   if (!result.ok) { el.appendChild(h('span', { class: 'pill ng' }, 'Check the inputs')); return el; }
-  if (!result.verdict) return null;
+  if (!result.verdict || result.verdict.pass == null) return null;
   el.appendChild(h('span', { class: 'pill ' + (result.verdict.pass ? 'ok' : 'ng') }, verdictWord(result)));
   if (result.verdict.line == null) el.appendChild(h('span', { class: 'mono' }, 'D/C = ' + fmtDC(result.verdict.dc)));
   el.appendChild(h('span', { class: 'muted' }, result.verdict.governing));

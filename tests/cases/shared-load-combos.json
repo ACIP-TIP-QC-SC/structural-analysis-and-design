@@ -69,6 +69,37 @@
     "rows.203-13b(-E)": 133.21
    },
    "pass": null
+  },
+  {
+   "id": "SH-C3",
+   "name": "Test: special seismic combinations, D 100, L 50, Em 112",
+   "method": null,
+   "input": {
+    "mode": "special",
+    "quantity": "force",
+    "D": 100,
+    "L": 50,
+    "Lr": 0,
+    "R": 0,
+    "W": 0,
+    "E": 0,
+    "H": 0,
+    "F": 0,
+    "T": 0,
+    "f1": 0.5,
+    "Em": 112
+   },
+   "expect": {
+    "rows.203-19": 257,
+    "rows.203-19(-Em)": 33,
+    "rows.203-20": 202,
+    "rows.203-20(-Em)": -22,
+    "max": 257,
+    "min": -22,
+    "maxId": "203-19",
+    "minId": "203-20(-Em)"
+   },
+   "pass": null
   }
  ]
 }

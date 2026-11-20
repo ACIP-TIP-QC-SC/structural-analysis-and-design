@@ -1191,6 +1191,117 @@ function loadTransfer(I, R, mode) {
     ampText: 'Deflection exaggerated. Colors show how the panel load is shared by the edge beams.' }, null);
 }
 
+// ================================================================== wind loads (Sec. 207B)
+// A box building B x L with its roof; faces coloured by the design pressure |p| with +GCpi (pressures
+// mode) or by the net storey pressure (storeys mode). Play moves the wind arrows in and out (pulsing).
+// x runs along the wind (L), z across it (B). Velocity mode has no model.
+function windModel(I, R, mode) {
+  if (mode === 'velocity') return null;
+  const D = R.diagram || {};
+  if (!(D.L > 0) || !(D.B > 0)) return null;
+  const L = D.L, B = D.B, eave = D.eave, t = Math.max(Math.min(L, B) / 60, 0.08);
+  const gableN = D.gable && D.theta > 0 && D.direction === 'normal', gableP = D.gable && D.theta > 0 && D.direction === 'parallel';
+  const parts = [];
+  const nz = sg(B, 1, 4, 30), nx = sg(L, 1, 4, 30), ny = sg(eave, 1, 3, 30);
+  parts.push(P(BX(-t, 0, 0, eave, 0, B, [1, ny, nz]), 'concrete', { role: 'ww', solid: true }));
+  parts.push(P(BX(L, L + t, 0, eave, 0, B, [1, ny, nz]), 'concrete', { role: 'lw', solid: true }));
+  parts.push(P(BX(0, L, 0, eave, -t, 0, [nx, ny, 1]), 'concrete', { role: 'side', solid: true }));
+  parts.push(P(BX(0, L, 0, eave, B, B + t, [nx, ny, 1]), 'concrete', { role: 'side', solid: true }));
+  const strips = 16;
+  if (gableN) {
+    for (let k = 0; k < strips; k++) {
+      const x0 = L * k / strips, x1 = L * (k + 1) / strips, xm = (x0 + x1) / 2, y = eave + D.rise * (1 - Math.abs(2 * xm / L - 1));
+      parts.push(P(BX(x0, x1, y, y + t, 0, B, [1, 1, nz]), 'concrete', { role: xm < L / 2 ? 'rww' : 'rlw', solid: true }));
+    }
+  } else if (gableP) {
+    for (let k = 0; k < strips; k++) {
+      const z0 = B * k / strips, z1 = B * (k + 1) / strips, zm = (z0 + z1) / 2, y = eave + D.rise * (1 - Math.abs(2 * zm / B - 1));
+      parts.push(P(BX(0, L, y, y + t, z0, z1, [nx, 1, 1]), 'concrete', { role: 'roof', solid: true }));
+    }
+  } else parts.push(P(BX(0, L, eave, eave + t, 0, B, [nx, 1, nz]), 'concrete', { role: 'roof', solid: true }));
+  parts.push(P(BX(-L * 0.3, L * 1.3, -0.3, 0, -B * 0.3, B * 1.3, [4, 1, 4]), 'soil', { piece: 'S', role: 'ground', stress: false }));
+  const bands = (list, y) => { let p = list[list.length - 1]; for (const r of list) { if (y <= r.z) { p = r; break; } } return p; };
+  let f, label;
+  if (mode === 'storeys') {
+    const net = (D.storeys || []).map((s) => ({ z: s.z, p: s.trib > 0 ? s.F / (B * s.trib) : 0 }));
+    label = 'Net wall pressure of each storey (windward + leeward)';
+    f = (x, y, z, part, lam) => (part.role === 'ww' && net.length ? lam * bands(net, y).p : 0);
+  } else {
+    const ww = (D.windward || []).map((r) => ({ z: r.z, p: Math.abs(r.pPos) }));
+    const zone = (x) => { const zs = D.roof || []; for (const r of zs) if (x <= r.x2) return Math.abs(r.pPos); return zs.length ? Math.abs(zs[zs.length - 1].pPos) : 0; };
+    label = 'Design wind pressure |p| with +GCpi';
+    f = (x, y, z, part, lam) => {
+      let p = 0;
+      if (part.role === 'ww') p = ww.length ? bands(ww, y).p : 0;
+      else if (part.role === 'lw') p = Math.abs(D.leeward.pPos);
+      else if (part.role === 'side') p = Math.abs(D.side.pPos);
+      else if (part.role === 'roof') p = D.roof ? zone(clamp(x, 0, L)) : D.roofLW ? Math.abs(D.roofLW.pPos) : 0;
+      else if (part.role === 'rww') p = Math.abs(D.roofWW.pAPos != null ? D.roofWW.pAPos : D.roofWW.pBPos);
+      else if (part.role === 'rlw') p = Math.abs(D.roofLW.pPos);
+      return lam * p;
+    };
+  }
+  const len = Math.max(Math.min(L, B) * 0.22, 1), loads = [];
+  const levels = mode === 'storeys' ? (D.storeys || []).map((s) => Math.min(s.z, eave)) : (D.windward || []).map((r) => Math.min(r.z, eave));
+  levels.forEach((y) => [0.25, 0.5, 0.75].forEach((w) => loads.push({ p: [-t - 0.05, Math.max(y - 0.4, 0.3), B * w], dir: [1, 0, 0], len, piece: 'W' })));
+  return finish({
+    parts, hasRebar: false, cracks: [], loads,
+    stress: { label, q: 'pressure_lo', f },
+    disp(x, y, z, part, s) {
+      if (part.piece === 'W') return [-len * 1.5 * (1 - s.r), 0, 0];     // the arrows travel in as the gust builds
+      return [0, 0, 0];
+    },
+    lamEnd: 1, noAnim: false,
+    ampText: 'The wind arrows move in as the load rises to the design pressure, then back out.'
+  }, null);
+}
+
+// ================================================================== seismic loads (Sec. 208)
+// A stack of floor slabs on columns (an illustrative 3 x 2 bay plan). Distribution and simplified: storey
+// forces as arrows, columns coloured by the storey shear, Play sways the building in a first-mode shape
+// (displacement growing with the height). Drift: the same stack, coloured by ΔM / limit and displaced by
+// the ΔM profile. Static mode has no levels, so no model.
+function seismicModel(I, R, mode) {
+  if (mode === 'static') return null;
+  const D = R.diagram || {}, L = D.levels || [];
+  if (!L.length) return null;
+  const hn = L[L.length - 1].h, bay = clamp(hn / 3, 4, 8), nx = 3, nz = 2, X = nx * bay, Zw = nz * bay;
+  const col = clamp(bay / 14, 0.3, 0.6), slab = clamp(bay / 30, 0.15, 0.3);
+  const parts = [];
+  L.forEach((r, i) => {
+    const y0 = i ? L[i - 1].h : 0, y1 = r.h;
+    for (let a = 0; a <= nx; a++) for (let b = 0; b <= nz; b++) {
+      parts.push(P(BX(a * bay - col / 2, a * bay + col / 2, y0, y1 - slab, b * bay - col / 2, b * bay + col / 2, [1, sg(y1 - y0, 0.5, 3, 12), 1]), 'concrete', { role: 'col', storey: i, solid: true }));
+    }
+    parts.push(P(BX(-col, X + col, y1 - slab, y1, -col, Zw + col, [nx * 2, 1, nz * 2]), 'concrete', { role: 'slab', storey: i, solid: true, stress: false }));
+  });
+  parts.push(P(BX(-bay * 0.4, X + bay * 0.4, -0.4, 0, -bay * 0.4, Zw + bay * 0.4, [4, 1, 4]), 'soil', { piece: 'S', role: 'ground', stress: false }));
+  const drift = mode === 'drift';
+  // lateral displacement profile at the levels (m): drift mode from ΔM, otherwise a first-mode shape ∝ height
+  const disp = [];
+  if (drift) { let acc = 0; L.forEach((r) => { acc += r.dM / 1000; disp.push(acc); }); }
+  const top = drift ? disp[disp.length - 1] : 1, amp = drift ? (top > 0 ? 0.04 * hn / top : 0) : 0.03 * hn;
+  const at = (y) => {
+    if (!drift) return clamp(y / hn, 0, 1);
+    let prevH = 0, prevD = 0;
+    for (let i = 0; i < L.length; i++) { if (y <= L[i].h) return prevD + (disp[i] - prevD) * (y - prevH) / (L[i].h - prevH || 1); prevH = L[i].h; prevD = disp[i]; }
+    return disp[disp.length - 1];
+  };
+  const loads = drift ? [] : L.map((r) => ({ p: [-bay * 0.35, r.h - slab / 2, Zw / 2], dir: [1, 0, 0], len: clamp(bay * 0.6 * r.Ftotal / Math.max(...L.map((q) => q.Ftotal)), 0.6, bay), piece: 'L' + r.h }));
+  return finish({
+    parts, hasRebar: false, cracks: [], loads,
+    stress: drift ? { label: 'Storey drift ΔM / limit', q: 'ratio', f: (x, y, z, part, lam) => (part.role === 'col' ? lam * L[part.storey].ratio : 0) }
+      : { label: 'Storey shear', q: 'force', f: (x, y, z, part, lam) => (part.role === 'col' ? lam * L[part.storey].V : 0) },
+    disp(x, y, z, part, s) {
+      if (part.piece === 'S') return [0, 0, 0];
+      const yy = typeof part.piece === 'string' && part.piece[0] === 'L' ? Number(part.piece.slice(1)) : y;
+      return [amp * at(yy) * s.r, 0, 0];
+    },
+    lamEnd: 1, noAnim: false,
+    ampText: drift ? 'Displaced by the ΔM profile, exaggerated.' : 'Sways in a first-mode shape as the storey forces rise to the design level, exaggerated.'
+  }, null);
+}
+
 // ---- registry (the Matrix Analysis calculators have no Stress or 3D view: their diagrams follow the Excel programs)
 const BUILD = {
   'rc/beam-flexure': (I, R, mode) => rcBeam(I, R, mode, {}),
@@ -1217,7 +1328,9 @@ const BUILD = {
   'found/mat': mat,
   'found/pile-capacity': pileCapacity,
   'found/pile-caps': pileCaps,
-  'shared/load-transfer': loadTransfer
+  'shared/load-transfer': loadTransfer,
+  'shared/wind': windModel,
+  'shared/seismic': seismicModel
 };
 
 export const hasViz = (id) => !!BUILD[id];

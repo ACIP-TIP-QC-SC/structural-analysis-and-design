@@ -18,7 +18,7 @@ export const MODULES = [
   m('rc/development', 'Development and splices', ['Tension', 'Compression', 'Hooks', 'Lap splices'], 2, 'Development lengths, standard hooks and lap splices.', 'Development length of bars in tension and compression, hooked bars, and lap splice lengths.', 'bar'),
   m('rc/serviceability', 'Deflection and crack control', ['Deflection', 'Bar spacing'], 2, 'Immediate and long-term deflection, and bar spacing for crack control.', 'Effective moment of inertia, immediate and long-term deflections against the code limits, and the maximum bar spacing.', 'beam'),
   m('rc/shear-walls', 'Shear walls (basic)', ['In-plane shear', 'Axial and flexure', 'Minimum steel'], 3, 'In-plane shear, axial load and minimum steel of ordinary walls.', 'In-plane shear strength, the simplified axial method and the minimum wall reinforcement.', 'wall'),
-  m('rc/prestressed', 'Prestressed', [], 'Later', 'Prestressed concrete members.', 'Planned for a later release.', 'beam'),
+  m('rc/prestressed', 'Prestressed', ['Stresses', 'Flexural strength', 'Shear'], 5, 'Prestressed concrete beams.', 'Concrete stresses at transfer and at service, the class of the member, flexural strength with bonded or unbonded tendons, 1.2 Mcr, and shear by the approximate method.', 'beam'),
   m('steel/tension', 'Tension members', ['Yielding and rupture', 'Block shear'], 1, 'Gross yielding, net section rupture with shear lag, and block shear.', 'Available tensile strength of a rolled shape or plate by LRFD or ASD, with the net area and shear lag factor. A second mode checks block shear.', 'tension'),
   m('steel/compression', 'Compression members', ['Flexural buckling'], 1, 'Flexural buckling strength of rolled columns.', 'Available compressive strength of a W or S shape about both axes, with the local buckling classification.', 'ishape'),
   m('steel/beams', 'Beams', ['Flexure', 'Shear', 'Deflection'], 1, 'Flexure with lateral-torsional buckling, shear and deflection.', 'Available flexural strength for any unbraced length, with a chart of strength against length. Separate modes give shear strength and deflection.', 'ishape'),
@@ -26,7 +26,7 @@ export const MODULES = [
   m('steel/bolted', 'Bolted connections', ['Bearing-type', 'Slip-critical', 'Eccentric group'], 2, 'Bolt shear, bearing, slip resistance and eccentric bolt groups.', 'Bearing-type and slip-critical bolts, and the elastic analysis of an eccentrically loaded bolt group.', 'bolts'),
   m('steel/welded', 'Welded connections', ['Fillet', 'Groove', 'Eccentric group'], 2, 'Fillet and groove welds, and eccentric weld groups.', 'Strength of fillet and groove welds and the elastic analysis of an eccentrically loaded weld group.', 'bolts'),
   m('steel/base-plates', 'Base plates and anchor rods', ['Bearing', 'Plate thickness', 'Anchors'], 3, 'Bearing on concrete, plate thickness and anchor rod strength.', 'Axially loaded column base plates: concrete bearing, plate thickness and the steel strength of anchor rods.', 'footing'),
-  m('steel/composite', 'Composite', [], 'Later', 'Composite steel and concrete members.', 'Planned for a later release.', 'ishape'),
+  m('steel/composite', 'Composite', ['Composite beam', 'Encased column', 'Filled column'], 5, 'Composite steel and concrete members.', 'Composite beams with a solid slab or a steel deck (full or partial composite action, headed studs), and encased or concrete-filled composite columns.', 'ishape'),
   m('found/bearing', 'Bearing capacity', ['Terzaghi', 'General equation'], 1, 'Ultimate and allowable bearing capacity of shallow footings.', 'Bearing capacity by the Terzaghi equations or the general equation with shape, depth and inclination factors. Handles a water table and eccentric load.', 'soil'),
   m('found/isolated', 'Isolated footings', ['Design', 'Analyze'], 1, 'Size, shear and flexure of a footing under one column.', 'Size a square or rectangular footing from service loads, then check one-way shear, two-way shear and flexure with factored loads.', 'footing'),
   m('found/wall', 'Wall footings', ['Design'], 1, 'Width, shear and flexure of a strip footing per metre of wall.', 'Design a footing under a concrete or masonry wall for one metre of length.', 'footing'),
@@ -36,15 +36,15 @@ export const MODULES = [
   m('found/mat', 'Mat foundations', ['Rigid method'], 3, 'Soil pressure under a rigid mat and strip design loads.', 'Conventional rigid method: pressures under the mat and the adjusted loads on a design strip.', 'footing'),
   m('found/pile-capacity', 'Pile capacity', ['Point', 'Skin', 'Group'], 3, 'Point and skin resistance of single piles and pile groups.', 'Static formulas for the point and skin resistance of a pile and the efficiency of a group.', 'soil'),
   m('found/pile-caps', 'Pile caps', ['Reactions', 'Shear', 'Flexure'], 3, 'Pile reactions, shear and flexure of a rigid cap.', 'Reactions of the piles under a rigid cap and the shear and flexure design of the cap.', 'footing'),
-  m('found/settlement', 'Settlement', [], 'Optional', 'Elastic and consolidation settlement.', 'Optional module, planned for a later release.', 'soil'),
+  m('found/settlement', 'Settlement', ['Elastic', 'Consolidation'], 5, 'Elastic and consolidation settlement.', 'Immediate settlement of a footing on elastic soil layers (Steinbrenner) and primary consolidation settlement of a clay layer, with the stress increase by Boussinesq or the 2:1 method.', 'soil'),
   m('matrix/truss', 'Truss', ['By joints'], 4, 'Plane trusses by the direct stiffness method.', 'Joint displacements, support reactions and member axial forces of a plane truss, with the member and structure stiffness matrices, the partitioned matrix and every step of the solution. Handles settlements and inclined rollers.', 'truss'),
   m('matrix/beam', 'Beams', ['By spans', 'By joints'], 4, 'Continuous beams by the direct stiffness method.', 'Displacements, reactions, member end forces, shear and moment diagrams and the elastic curve of a beam. Point, couple, uniform and linear loads, hinges, settlements and prescribed rotations.', 'beam'),
   m('matrix/frame', 'Frames', ['By joints'], 4, 'Plane frames by the direct stiffness method.', 'Displacements, reactions, member end forces, axial, shear and moment diagrams and the deflected shape of a plane frame, with member releases, inclined rollers and loads in local or global directions.', 'frame'),
   m('matrix/bar', 'Bars (axial)', ['By nodes'], 4, 'Axially loaded bars by the direct stiffness method.', 'Displacements, reactions, axial forces and stresses of bars in a line, with distributed axial loads, temperature change and misfit.', 'bar'),
   m('shared/load-transfer', 'Load transfer', ['Panel distribution', 'Load takeoff'], 1, 'Slab loads to beams, columns and footings.', 'Distribute a floor panel load to its edge beams by one-way or two-way action, or take off loads down to a column and its footing.', 'panel'),
   m('shared/load-combos', 'Load combinations', ['Strength', 'Allowable'], 1, 'NSCP Section 203 strength and allowable combinations.', 'Evaluate every load combination of Section 203 for your loads and mark the governing maximum and minimum.', 'combo'),
-  m('shared/wind', 'Wind loads', [], 'Later', 'Wind loads on buildings.', 'Planned for a later release.', 'combo'),
-  m('shared/seismic', 'Seismic loads', [], 'Later', 'Seismic loads on buildings.', 'Planned for a later release.', 'combo')
+  m('shared/wind', 'Wind loads', ['Velocity pressure', 'Building pressures', 'Storey forces'], 5, 'Wind loads on buildings (NSCP 207).', 'Velocity pressure with exposure and topography, wall and roof pressures of enclosed and partially enclosed buildings, and storey forces for the main wind-force resisting system.', 'combo'),
+  m('shared/seismic', 'Seismic loads', ['Static force', 'Vertical distribution', 'Simplified static', 'Storey drift'], 5, 'Seismic loads on buildings (NSCP 208).', 'Design base shear by the static force procedure, its distribution over the height, the simplified static method, redundancy, and the storey drift check.', 'combo')
 ];
 
 const LOADERS = {
@@ -59,6 +59,8 @@ const LOADERS = {
   'found/wall': () => import('../modules/found/wall.ui.js'),
   'shared/load-transfer': () => import('../modules/shared/load-transfer.ui.js'),
   'shared/load-combos': () => import('../modules/shared/load-combos.ui.js'),
+  'shared/wind': () => import('../modules/shared/wind.ui.js'),
+  'shared/seismic': () => import('../modules/shared/seismic.ui.js'),
   'rc/columns': () => import('../modules/rc/columns.ui.js'),
   'rc/development': () => import('../modules/rc/development.ui.js'),
   'rc/serviceability': () => import('../modules/rc/serviceability.ui.js'),

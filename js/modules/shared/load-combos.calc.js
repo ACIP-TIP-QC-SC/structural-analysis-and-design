@@ -61,26 +61,30 @@ export function solve(input, ctx) { return run(input, ctx).result; }
 
 function run(input, ctx) {
   const ed = ctx.edition, LD = ed.loads, mode = input.mode || 'strength', q = input.quantity || 'force';
-  const names = LD.symbols.map((x) => x[0]);
+  // Special seismic (203.5): D, L and Em only; Em acts in either direction like W and E.
+  const special = mode === 'special';
+  const names = special ? ['D', 'L', 'Em'] : LD.symbols.map((x) => x[0]);
   if (!finite(input, names) || !(input.f1 > 0)) return { vals: { error: true }, result: fail(['Every load needs a number. Use 0 for a load that does not act.']) };
   const loadsIn = {};
   names.forEach((k) => { loadsIn[k] = input[k]; });
-  const set = mode === 'basic' ? LD.basic : mode === 'alternate' ? LD.alternate : LD.strength;
-  const clause = mode === 'basic' ? 'loads.allowable' : mode === 'alternate' ? 'loads.alternate' : 'loads.strength';
-  const rows = evaluateSet(set, loadsIn, input.f1, LD.reversible, q);
+  const set = special ? LD.special : mode === 'basic' ? LD.basic : mode === 'alternate' ? LD.alternate : LD.strength;
+  const clause = special ? 'loads.special' : mode === 'basic' ? 'loads.allowable' : mode === 'alternate' ? 'loads.alternate' : 'loads.strength';
+  const rows = evaluateSet(set, loadsIn, input.f1, special ? LD.reversible.concat(['Em']) : LD.reversible, q);
   const out = blank(), rec = recorder(), vals = { rows: {} };
   let max = rows[0], min = rows[0];
   rows.forEach((r) => { vals.rows[r.id] = r.value; if (r.value > max.value) max = r; if (r.value < min.value) min = r; });
+  const specialNote = special ? 'Use these only where 203.5 or the material chapters require Em (for example elements supporting discontinuous systems). ' : '';
   rows.forEach((r) => rec.add(r.label, ['U = '].concat(r.formula), ['U = '].concat(r.substitution), S`U = ${u(r.value, q)}`, clause,
-    r === max ? 'Governing (maximum).' : r === min ? 'Governing (minimum), for uplift and overturning checks.' : ''));
+    specialNote + (r === max ? 'Governing (maximum).' : r === min ? 'Governing (minimum), for uplift and overturning checks.' : '')));
   vals.max = max.value; vals.min = min.value; vals.maxId = max.id; vals.minId = min.id;
   out.steps = rec.steps;
   out.results = [res('Governing maximum (' + max.label + ')', max.value, q), res('Governing minimum (' + min.label + ')', min.value, q), res('f1', input.f1)];
-  out.notes.push('W and E act in either direction, so every combination that contains them is evaluated with both signs.');
+  out.notes.push(special ? 'Em acts in either direction, so each combination is evaluated with +Em and −Em. Use these only where 203.5 or the material chapters require Em (for example elements supporting discontinuous systems).'
+    : 'W and E act in either direction, so every combination that contains them is evaluated with both signs.');
   if (mode === 'basic') out.notes.push('No stress increase is allowed with the basic allowable combinations (' + ed.clauses['loads.allowable'].nscp + ').');
   out.diagram = {
     rows: rows.map((r) => ({ id: r.id, label: r.label, value: r.value, max: r === max, min: r === min })), q,
-    chips: [[mode === 'strength' ? 'Strength design or LRFD' : mode === 'basic' ? 'Allowable, basic' : 'Allowable, alternate basic'], S`f1 = ${input.f1}`],
+    chips: [[special ? 'Special seismic (203.5)' : mode === 'strength' ? 'Strength design or LRFD' : mode === 'basic' ? 'Allowable, basic' : 'Allowable, alternate basic'], S`f1 = ${input.f1}`],
     tables: [{
       title: 'Load combinations', head: ['Eq.', 'Combination', 'With numbers', 'Result', ''],
       rows: rows.map((r) => ({ hl: r === max || r === min, cells: [r.label.replace('Eq. ', ''), r.formula, r.substitution, u(r.value, q), r === max ? 'Governing (maximum)' : r === min ? 'Governing (minimum)' : ''] })),
