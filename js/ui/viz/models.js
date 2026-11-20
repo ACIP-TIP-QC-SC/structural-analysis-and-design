@@ -1302,6 +1302,158 @@ function seismicModel(I, R, mode) {
   }, null);
 }
 
+// ================================================================== composite (steel/composite)
+// Beam: the W shape with the slab (and deck ribs), studs on the top flange; the stress view shows the plastic stress
+// blocks of 509.3.2.1 at midspan (illustrative). Columns: the encased or filled section extruded to KL; Play buckles it.
+function compositeModel(I, R, mode) {
+  const D = R.diagram || {};
+  if (mode === 'encased' || mode === 'filled') return compositeColumn(I, R, mode, D);
+  const { dsec, bf, tf, tw } = shapeDims(I, D), S = iSection(dsec, bf, tf, tw);
+  const L = clamp(m(I.span, 9000), 2, 20), Fy = pos(I.Fy, 345), fc = pos(I.fc, 28);
+  const be = m(D.be, Math.min(L * 250, 2000)), tc = m(I.tc, 125), deck = D.deck || I.deck || 'none', hr = deck === 'none' ? 0 : m(I.hr, 75), wr = m(I.wr, 150);
+  const yDeck = S.d, yTop = S.d + hr + tc, parts = steelBeamParts(L, S);
+  parts.push(P(BX(0, L, yDeck + hr, yTop, -be / 2, be / 2, [sg(L, L / 40, 4, 40), 3, 6]), 'concrete', { role: 'slab', solid: true, opacity: 0.55 }));
+  if (deck !== 'none') {
+    const ribs = [], pitch = Math.max(2 * wr, 0.15);
+    if (deck === 'perpendicular') for (let x = pitch / 2; x < L - wr / 2 && ribs.length < 80; x += pitch) ribs.push(BX(x - wr / 2, x + wr / 2, yDeck, yDeck + hr, -be / 2, be / 2, [1, 1, 4]));
+    else for (let z = -be / 2 + pitch / 2; z < be / 2 - wr / 2 && ribs.length < 40; z += pitch) ribs.push(BX(0, L, yDeck, yDeck + hr, z - wr / 2, z + wr / 2, [sg(L, L / 30, 2, 30), 1, 1]));
+    parts.push(P(ribs, 'concrete', { role: 'rib', solid: true, stress: false }));
+    parts.push(P(BX(0, L, yDeck, yDeck + 0.002, -be / 2, be / 2, [1, 1, 1]), 'steel', { role: 'deck', stress: false }));
+  }
+  const n = Math.min(Math.max(Math.round(pos(D.N, 10)), 1), 40), studs = [], ds = m(I.stud, 19), hs = Math.min(hr + 0.75 * tc, yTop - yDeck - 0.015);
+  for (let i = 0; i < n; i++) [(i + 0.5) * (L / 2) / n, L - (i + 0.5) * (L / 2) / n].forEach((x) => studs.push(CY([x, yDeck, 0], [x, yDeck + hs, 0], ds / 2, 1, 8)));
+  parts.push(P(studs, 'bolt', { role: 'stud', stress: false }));
+  const g = governing(R, /flexur/i), fi = failInfo(g, 'the steel yields in tension and the slab crushes at midspan');
+  const dc = g ? g.dc : 1, a = m(D.a, 20), ybar = m(D.ybar, 0), yPNA = D.PNA === 'slab' ? yTop - a : S.d - ybar;
+  return finish({
+    parts, hasRebar: false, cracks: [], loads: beamLoads(L, yTop),
+    stress: { label: "Plastic stress blocks: 0.85f'c over a, Fy in the steel (illustrative)", q: 'stress', f(x, y, z, part, lam) {
+      const k = clamp(lam * dc * mShape(x, L), 0, 1);
+      if (part.role === 'slab') return y >= yTop - a - 1e-6 ? 0.85 * fc * k : 0;
+      return Fy * k * (Math.abs(y - yPNA) < 0.002 ? 0.5 : 1);
+    } },
+    disp: beamDisp({ L, h: yTop, amp: L / 60, fail: fi ? 'flex' : null, xs: L / 2 }),
+    ampText: 'Movements are exaggerated. Simple span; ' + (D.full ? 'full' : 'partial') + ' composite action with ' + (D.N || n) + ' studs each side of midspan.' + (D.N > n ? ' Studs drawn up to 40 per half.' : '')
+  }, fi);
+}
+function compositeColumn(I, R, mode, D) {
+  const Hc = clamp(m(I.KL, 4000), 1.5, 12), Fy = pos(I.Fy, 345), fc = pos(I.fc, 35), ny = sg(Hc, 0.08, 10, 60), parts = [];
+  const g = governing(R, /compressive/i), dc = g ? g.dc : 1;
+  const fi = failInfo(g, 'the composite column buckles sideways (' + (D.inelastic === false ? 'elastic' : 'inelastic') + ' flexural buckling)');
+  let concCap = 0.85 * fc, weakX = true;
+  if (mode === 'encased') {
+    const b = pos(I.b, 450), h = pos(I.h, 450), X = b / 2000, Z = h / 2000, { dsec, bf, tf, tw } = shapeDims(I, D), S = iSection(dsec, bf, tf, tw);
+    parts.push(P(BX(-X, X, 0, Hc, -Z, Z, [6, ny, 6]), 'concrete', { role: 'body' }));
+    wColumn(S, Hc).filter((p) => p.piece !== 'S').forEach((p) => parts.push(Object.assign(p, { inner: true })));
+    (D.bars || []).forEach(([x, y]) => parts.push(P(CY([x / 1000, 0.03, -y / 1000], [x / 1000, Hc - 0.03, -y / 1000], pos(I.db, 25) / 2000, ny, 8), 'rebar', { inner: true, role: 'bar' })));
+    const ci = (pos(I.cover, 40) + pos(I.tie, 10) / 2) / 1000, rt = pos(I.tie, 10) / 2000, tie = [], ax = X - ci, az = Z - ci, sT = Math.max(pos(I.sTie, Math.min(b, h) / 2) / 1000, Hc / 60);
+    for (let y = 0.05; y < Hc - 0.02; y += sT) tie.push(CY([-ax, y, -az], [ax, y, -az], rt, 1, 5), CY([ax, y, -az], [ax, y, az], rt, 1, 5), CY([ax, y, az], [-ax, y, az], rt, 1, 5), CY([-ax, y, az], [-ax, y, -az], rt, 1, 5));
+    parts.push(P(tie, 'rebar', { inner: true, role: 'tie' }));
+    parts.push(P(BX(-X - 0.2, X + 0.2, -0.2, 0, -Z - 0.2, Z + 0.2), 'support', { piece: 'S', stress: false }));
+    weakX = true;
+  } else if (I.hss === 'round') {
+    const R0 = pos(I.D, 400) / 2000, t = pos(I.t, 10) / 1000;
+    concCap = 0.95 * fc;
+    parts.push(P(CY([0, 0, 0], [0, Hc, 0], R0, ny, 28), 'steel', { role: 'tube' }));
+    parts.push(P(CY([0, 0.001, 0], [0, Hc - 0.001, 0], R0 - t, ny, 24), 'concrete', { role: 'fill' }));
+    parts.push(P(BX(-R0 - 0.2, R0 + 0.2, -0.2, 0, -R0 - 0.2, R0 + 0.2), 'support', { piece: 'S', stress: false }));
+  } else {
+    const X = pos(I.B, 300) / 2000, Z = pos(I.H, 300) / 2000, t = pos(I.t, 10) / 1000;
+    parts.push(P([BX(-X, X, 0, Hc, -Z, -Z + t, [4, ny, 1]), BX(-X, X, 0, Hc, Z - t, Z, [4, ny, 1]), BX(-X, -X + t, 0, Hc, -Z + t, Z - t, [1, ny, 4]), BX(X - t, X, 0, Hc, -Z + t, Z - t, [1, ny, 4])], 'steel', { role: 'tube' }));
+    parts.push(P(BX(-X + t, X - t, 0.001, Hc - 0.001, -Z + t, Z - t, [4, ny, 4]), 'concrete', { role: 'fill' }));
+    parts.push(P(BX(-X - 0.2, X + 0.2, -0.2, 0, -Z - 0.2, Z + 0.2), 'support', { piece: 'S', stress: false }));
+    weakX = X <= Z;
+  }
+  return finish({
+    parts, hasRebar: mode === 'encased', cracks: [], loads: [{ p: [0, Hc, 0], dir: [0, -1, 0], len: 0.5 }],
+    stress: { label: "Plastic stress state: " + (mode === 'filled' && I.hss === 'round' ? '0.95' : '0.85') + "f'c in the concrete, Fy in the steel (illustrative)", q: 'stress', f(x, y, z, part, lam) {
+      const k = clamp(lam * dc, 0, 1);
+      return part.mat === 'concrete' ? concCap * k : part.mat === 'rebar' ? pos(I.Fyr, 420) * k : Fy * k;
+    } },
+    disp(x, y, z, part, s) { if (part.piece === 'S') return [0, 0, 0]; const eta = clamp(y / Hc, 0, 1), w = ((Hc / 200) * curve(s.r) + 0.15 * Hc * s.brk) * Math.sin(PI * eta), dy = -0.002 * Hc * s.r - 0.05 * Hc * s.brk * eta; return weakX ? [w, dy, 0] : [0, dy, w]; },
+    ampText: 'Lateral deflection is exaggerated. Pinned ends, KL = ' + Hc.toFixed(1) + ' m.'
+  }, fi);
+}
+
+// ================================================================== prestressed (rc/prestressed)
+// The beam in translucent concrete with the tendon inside (the rebar toggle shows it). Stress view: the service fibre
+// stresses along the span (|σ| with the prestress and the load). Play: camber at transfer, then deflection under load.
+function prestressedModel(I, R, mode) {
+  const D = R.diagram || {};
+  const h = pos(D.h, pos(I.h, 750)), b = pos(D.b, pos(I.b, pos(I.bw, h * 0.4))), H = h / 1000, Bw = b / 1000;
+  const L = mode === 'stresses' || (mode === 'flexure' && I.bond === 'unbonded') ? clamp(pos(I.span, 12), 2, 40) : clamp(15 * H, 3, 20);
+  const sec = D.sec || { A: b * h, I: b * h * h * h / 12, yt: h / 2, yb: h / 2 };
+  const Aps = pos(I.Aps, 800), Pe = mode === 'stresses' ? pos(D.Pe, 800) : (Aps * pos(I.fse, 1000)) / 1000, Pi = mode === 'stresses' ? pos(D.Pi, Pe) : Pe * 1.1;
+  const eMid = mode === 'stresses' ? num(D.eMid, 0) : pos(I.dp, 0.85 * h) - h / 2, eEnd = mode === 'stresses' ? num(D.eEnd, eMid) : eMid;
+  const Mtot = mode === 'stresses' ? pos(D.Mtot, 100) : pos(I.Mu, 100);
+  const ecc = (x) => eEnd + (eMid - eEnd) * (1 - Math.abs((2 * x) / L - 1));
+  const parts = [P(BX(0, L, 0, H, -Bw / 2, Bw / 2, [sg(L, L / 40, 4, 48), 8, 2]), 'concrete', { role: 'body' })];
+  const yT = (x) => (sec.yb - ecc(x)) / 1000, segs = [], n = 12, rT = clamp(Math.sqrt(Aps / PI) / 1000, 0.008, 0.03);
+  for (let i = 0; i < n; i++) { const xa = 0.05 + ((L - 0.1) * i) / n, xb = 0.05 + ((L - 0.1) * (i + 1)) / n; segs.push(CY([xa, yT(xa), 0], [xb, yT(xb), 0], rT, 2, 10)); }
+  parts.push(P(segs, 'rebar', { inner: true, role: 'tendon' }));
+  parts.push(P([BX(-0.12, 0.12, -0.1, 0, -Bw / 2 - 0.05, Bw / 2 + 0.05), BX(L - 0.12, L + 0.12, -0.1, 0, -Bw / 2 - 0.05, Bw / 2 + 0.05)], 'support', { piece: 'S', stress: false }));
+  const g = mode === 'shear' ? null : governing(R, mode === 'flexure' ? /flexural strength$/i : null);
+  const fi = mode === 'flexure' ? failInfo(g, 'the tendons yield and the concrete crushes at midspan') : null;
+  const Ec = 4700 * Math.sqrt(pos(I.fc, 40)), EI = Ec * sec.I;   // N·mm²
+  const camber = (Pi * 1000 * Math.abs(eMid) * (L * 1000) ** 2) / (8 * EI) / 1000, defl = (5 * Mtot * 1e6 * (L * 1000) ** 2) / (48 * EI) / 1000;
+  const amp = Math.max(L / 80, 1e-6) / Math.max(camber, defl, 1e-6);
+  return finish({
+    parts, hasRebar: true, cracks: [], loads: beamLoads(L, H),
+    stress: { label: mode === 'stresses' ? 'Service fibre stress |σ| (prestress Pe with the load)' : 'Fibre stress |σ| (prestress with Mu, illustrative)', q: 'stress', f(x, y, z, part, lam) {
+      if (part.role === 'tendon') return 0;
+      const eta = y * 1000 - sec.yb, M = lam * Mtot * mShape(x, L) * 1e6, P0 = Pe * 1000;
+      return Math.abs(-P0 / sec.A + (P0 * ecc(x) * eta) / sec.I - (M * eta) / sec.I);
+    } },
+    disp(x, y, z, part, s) {
+      if (part.piece === 'S') return [0, 0, 0];
+      const sh = Math.sin(PI * clamp(x / L, 0, 1));
+      let dy = amp * (camber - defl * curve(s.r)) * sh;
+      if (s.brk) dy -= 0.1 * L * s.brk * sh;
+      return [0, dy, 0];
+    },
+    ampText: 'Camber at transfer, then deflection under ' + (mode === 'stresses' ? 'the service load' : 'the factored moment') + '; movements exaggerated' + (mode === 'stresses' ? '' : ', span drawn for illustration') + '.'
+  }, fi);
+}
+
+// ================================================================== settlement (found/settlement)
+// The footing on layered soil (translucent slabs). Stress view: the stress increase Δσ below the footing (2:1 spread
+// with depth, illustrative). Play: the footing settles with the soil below it (exaggerated); there is no failure.
+function settlementModel(I, R, mode) {
+  const D = R.diagram || {};
+  const B = clamp(pos(D.B, pos(I.B, 1)), 0.3, 20), Lf = clamp(pos(D.L, pos(I.L, B)), B, 40), q0 = pos(I.q0, 100);
+  const Df = mode === 'consolidation' ? num(D.Df, num(I.Df, 1)) : 0.5;
+  const tk = [];
+  if (mode === 'consolidation') { (D.layers || []).forEach((r) => tk.push({ t: r.t, mat: 'soil' })); tk.push({ t: pos(D.Hc, 2), mat: 'soil2', clay: true }); }
+  else { tk.push({ t: Df, mat: 'soil' }); (D.layers || I.layers || []).forEach((r) => tk.push({ t: pos(r.t, 1), mat: tk.length % 2 ? 'soil2' : 'soil' })); }
+  const depth = tk.reduce((s, r) => s + r.t, 0) || 5, W = Math.max(2 * Lf, Lf + depth), Wz = Math.max(2 * B, B + depth);
+  const parts = [];
+  let y = 0;
+  tk.forEach((r) => { parts.push(P(BX(-W / 2, W / 2, y - r.t, y, -Wz / 2, Wz / 2, [28, sg(r.t, 0.15, 3, 24), 28]), r.mat, { role: r.clay ? 'clay' : 'soil' })); y -= r.t; });
+  // A vertical section through the centre of the footing, so the stress view shows the pressure bulb.
+  parts.push(P(BX(-W / 2, W / 2, -depth, -Df, -0.004, 0.004, [40, 40, 1]), 'soil2', { role: 'slice', opacity: 0.85 }));
+  const tF = clamp(B / 4, 0.3, 1);
+  parts.push(P(BX(-Lf / 2, Lf / 2, -Df, -Df + tF, -B / 2, B / 2, [6, 2, 4]), 'concrete', { role: 'footing', solid: true }));
+  parts.push(P(BX(-0.2, 0.2, -Df + tF, 0.4, -0.2, 0.2, [1, 4, 1]), 'concrete', { role: 'column', solid: true }));
+  const dsig = (x, yy, z) => {
+    const zb = -Df - yy;
+    if (zb < 0) return 0;
+    const b2 = B + zb, l2 = Lf + zb;
+    if (Math.abs(x) > l2 / 2 || Math.abs(z) > b2 / 2) return 0;
+    return (q0 * B * Lf) / (b2 * l2);
+  };
+  const S = pos(mode === 'consolidation' ? D.Sc : D.Se, 10) / 1000, amp = Math.max(0.05 * B / Math.max(S, 1e-6), 1);
+  return finish({
+    parts, hasRebar: false, cracks: [], loads: [{ p: [0, 0.4, 0], dir: [0, -1, 0], len: 0.6 }],
+    stress: { label: 'Stress increase Δσ below the footing (2:1 spread, illustrative)', q: 'pressure', f(x, yy, z, part, lam) { return part.role === 'footing' || part.role === 'column' ? lam * q0 : lam * dsig(x, yy, z); } },
+    disp(x, yy, z, part, s) {
+      if (part.role === 'footing' || part.role === 'column') return [0, -amp * S * curve(s.r), 0];
+      const d = dsig(x, Math.min(yy, -Df), z) / q0;
+      return [0, -amp * S * curve(s.r) * d, 0];
+    },
+    ampText: 'Settlement drawn about ' + Math.round(amp) + ' times the computed ' + (S * 1000).toFixed(1) + ' mm.'
+  }, null);
+}
+
 // ---- registry (the Matrix Analysis calculators have no Stress or 3D view: their diagrams follow the Excel programs)
 const BUILD = {
   'rc/beam-flexure': (I, R, mode) => rcBeam(I, R, mode, {}),
@@ -1312,6 +1464,7 @@ const BUILD = {
   'rc/development': development,
   'rc/serviceability': serviceability,
   'rc/shear-walls': shearWall,
+  'rc/prestressed': prestressedModel,
   'steel/tension': tension,
   'steel/compression': compression,
   'steel/beams': steelBeams,
@@ -1319,6 +1472,7 @@ const BUILD = {
   'steel/bolted': bolted,
   'steel/welded': welded,
   'steel/base-plates': basePlate,
+  'steel/composite': compositeModel,
   'found/bearing': bearing,
   'found/isolated': isolated,
   'found/wall': wallFooting,
@@ -1328,6 +1482,7 @@ const BUILD = {
   'found/mat': mat,
   'found/pile-capacity': pileCapacity,
   'found/pile-caps': pileCaps,
+  'found/settlement': settlementModel,
   'shared/load-transfer': loadTransfer,
   'shared/wind': windModel,
   'shared/seismic': seismicModel

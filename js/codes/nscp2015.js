@@ -381,7 +381,8 @@ const steel = {
     filled: { AsMin: 0.01, rectBt: 2.26, roundDt: 0.15, C3: { a: 0.6, b: 2, max: 0.9 } },        // 509.2.2
     column: { phi: 0.75, omega: 2.00, Pe: 0.44, base: 0.658, elastic: 0.877 },   // Eqs. 509.2-2, 509.2-3
     tension: { phi: 0.90, omega: 1.67 },
-    beam: { phi: 0.90, omega: 1.67, webPlastic: 3.76, beDiv: 8, setup: 0.75 },   // 509.3.1.1, 509.3.1.3, 509.3.2.1
+    beam: { phi: 0.90, omega: 1.67, webPlastic: 3.76, beDiv: 8, setup: 0.75,     // 509.3.1.1, 509.3.1.3, 509.3.2.1
+            practiceRatio: 0.25 },                        // common practice minimum composite ratio (not an NSCP value)
     encasedFlex: { phi: 0.90, omega: 1.67, phiPlastic: 0.85, omegaPlastic: 1.76 },   // 509.4
     deck: { hrMax: 75, wrMin: 50, studDiaMax: 20, aboveDeck: 40, coverAbove: 12, slabAbove: 50 },   // 509.3.2.3
     stud: { qn: 0.5, diaFlange: 2.5, minLong: 6, minTrans: 4, maxSlab: 8, lateralCover: 25 },       // Eq. 509.3-3, 509.3.2.4
@@ -392,7 +393,8 @@ const steel = {
       perp1:         { Rg: 1.0, Rp: 0.6 },                     // ribs perpendicular, 1 stud per rib
       perp2:         { Rg: 0.85, Rp: 0.6 },                    // 2 studs per rib
       perp3:         { Rg: 0.70, Rp: 0.6 },                    // 3 or more studs per rib
-      RpEmid: 0.75, emid: 50                                   // perpendicular: Rp = 0.75 when e_mid-ht >= 50 mm
+      RpEmid: 0.75, emid: 50,                                  // perpendicular: Rp = 0.75 when e_mid-ht >= 50 mm
+      parallelRatio: 1.5                                       // deck parallel: wide rib when wr/hr >= 1.5
     },
     channel: 0.3                                               // Eq. 509.3-4: Qn = 0.3 (tf + 0.5tw) La sqrt(f'c Ec)
   }

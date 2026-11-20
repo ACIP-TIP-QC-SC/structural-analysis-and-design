@@ -100,6 +100,7 @@ export function buildReport(r, svg) {
   meta.appendChild(el('div', null, 'Printed ' + new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })));
   head.appendChild(meta);
   rp.appendChild(head);
+  if (r.edition.status === 'draft') rp.appendChild(el('div', 'rp-draft', r.edition.banner));
 
   const tt = el('div', 'rp-title');
   const left = el('div');

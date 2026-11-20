@@ -92,6 +92,16 @@ if (!only || 'matrix/engine'.includes(only) || only.startsWith('matrix')) {
   rows.forEach((r) => { total++; if (!r.ok) { bad++; failed++; } lines.push('   ' + pad(r.name, 58) + (r.ok ? 'ok' : 'FAIL') + (r.detail ? '  ' + r.detail : '')); });
   if (bad) casesFailed++;
 }
+// Edition layer tests (tests/edition.mjs): parity of NSCP 2025 with NSCP 2015, ED-1, literal report
+if (!only || 'edition'.includes(only)) {
+  const { editionTests } = await import(pathToFileURL(join(here, 'edition.mjs')));
+  const rows = await editionTests();
+  lines.push('', '== edition  (tests/edition.mjs)');
+  cases++;
+  let bad = 0;
+  rows.forEach((r) => { total++; if (!r.ok) { bad++; failed++; } lines.push('   ' + pad(r.name, 58) + (r.ok ? 'ok' : 'FAIL') + (r.detail ? '  ' + r.detail : '')); });
+  if (bad) casesFailed++;
+}
 lines.push('', `${cases} cases, ${casesFailed} failed; ${total} comparisons, ${failed} failed. Tolerance ${TOL * 100}%.`);
 console.log(lines.join('\n'));
 process.exitCode = failed ? 1 : 0;

@@ -404,6 +404,7 @@ export function createWorkspace(outlet, def, mod, group, route, app) {
         h('button', { type: 'button', class: 'btn', onClick: () => { const live = (parts.draw && parts.draw.querySelector('svg.dg')) || drawSvg(); buildReport(reportData(), live ? live.cloneNode(true) : null); printReport(def.id.replace('/', '-') + '-' + st.mode); } }, 'Print report'),
         shareBtn,
         h('button', { type: 'button', class: 'btn', onClick: reset }, 'Reset'))));
+    if (edition().status === 'draft') outlet.appendChild(h('div', { class: 'banner', role: 'note' }, h('span', null, edition().banner)));
     if (st.banner) outlet.appendChild(h('div', { class: 'banner', role: 'status' }, h('span', null, st.banner), h('button', { type: 'button', class: 'btn', 'aria-label': 'Dismiss', onClick: () => { st.banner = ''; renderAll(); } }, 'Dismiss')));
     const tabs = modeTabs(def, st.mode, tasks(), task(), (t) => onChange('task', t, true));
     if (tabs) outlet.appendChild(tabs);

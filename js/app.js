@@ -1,7 +1,7 @@
 // Boot, hash router, global state and theme.
 import { h, clear } from './ui/dom.js';
 import { GROUPS, MODULES, getGroup, getModule, isBuilt, loadModule, tagOf } from './core/registry.js';
-import { editions, getEdition } from './codes/index.js';
+import { editions, getEdition, setPreview, selectable } from './codes/index.js';
 import * as store from './core/storage.js';
 import { renderHome, renderPlanned } from './ui/home.js';
 import { createWorkspace } from './ui/workspace.js';
@@ -9,6 +9,8 @@ import { createWorkspace } from './ui/workspace.js';
 const DEFAULTS = { edition: 'nscp2015', rcMethod: 'USD', steelMethod: 'LRFD', units: 'SI', theme: 'light', clauseDisplay: 'both', sidebarRail: false };
 const ALLOWED = { rcMethod: ['USD', 'WSD'], steelMethod: ['LRFD', 'ASD'], units: ['SI', 'US'], theme: ['light', 'dark', 'system'], clauseDisplay: ['both', 'nscp', 'source'] };
 const state = { homeFilter: 'all', navOpen: false };
+// ?edition-preview=1 makes draft editions selectable for this visit (read once, never stored).
+setPreview(new URLSearchParams(location.search).get('edition-preview') === '1');
 Object.keys(DEFAULTS).forEach((k) => {
   const val = store.get(k, DEFAULTS[k]);
   state[k] = ALLOWED[k] ? (ALLOWED[k].includes(val) ? val : DEFAULTS[k]) : (typeof val === typeof DEFAULTS[k] ? val : DEFAULTS[k]);
@@ -31,7 +33,7 @@ const app = {
     if (state[key] === value) return;
     const prev = state[key];
     state[key] = value;
-    if (key in DEFAULTS) store.set(key, value);
+    if (key in DEFAULTS && !(key === 'edition' && getEdition(value).status === 'draft')) store.set(key, value);   // a draft edition is not remembered
     if (key === 'theme') applyTheme();
     renderTop(); renderSide();
     if (quiet) return;
@@ -55,7 +57,7 @@ function renderTop() {
   const mod = getModule(route.id), g = mod ? getGroup(mod.group) : null;
   box.appendChild(h('label', { class: 'ctrl' }, 'Code edition',
     h('select', { class: 'sel', 'aria-label': 'Code edition', onChange: (e) => app.set('edition', e.target.value) },
-      editions.map((ed) => h('option', { value: ed.id, disabled: ed.enabled ? null : true, selected: ed.id === state.edition }, ed.label)))));
+      editions.map((ed) => h('option', { value: ed.id, disabled: selectable(ed) ? null : true, selected: ed.id === getEdition(state.edition).id }, ed.label)))));
   if (g && g.methods.length) box.appendChild(seg('Design method', g.methods.map((x) => [x, x]), state[g.stateKey], (val) => app.set(g.stateKey, val)));
   box.appendChild(seg('Units', [['SI', 'SI'], ['US', 'English']], state.units, (val) => app.set('units', val)));
   box.appendChild(seg('Theme', [['light', 'Light'], ['dark', 'Dark'], ['system', 'System']], state.theme, (val) => app.set('theme', val)));
@@ -116,7 +118,7 @@ function onRoute() {
   const next = parseHash();
   if (next.unknown) { history.replaceState(null, '', location.pathname + location.search + '#'); }
   const q = next.query;
-  if (q.e && editions.some((ed) => ed.id === q.e && ed.enabled)) { state.edition = q.e; }
+  if (q.e && editions.some((ed) => ed.id === q.e && selectable(ed))) { state.edition = q.e; }
   if (q.u === 'SI' || q.u === 'US') { state.units = q.u; store.set('units', q.u); }
   const mod = getModule(next.id);
   if (mod && q.m) { const g = getGroup(mod.group); if (g.stateKey && g.methods.includes(q.m)) { state[g.stateKey] = q.m; store.set(g.stateKey, q.m); } }

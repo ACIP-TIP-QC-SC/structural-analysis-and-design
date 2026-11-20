@@ -60,6 +60,9 @@ movements). `node tests/viz-browser.mjs [module] [--shots]` opens the Stress, 3D
 every module in a browser and checks that they draw without console errors (`--shots` saves
 screenshots to `tests/shots/`).
 
+Edition layer: `node tests/edition.mjs` (also run by `node tests/run.mjs`) checks that NSCP 2025 has every
+value path of NSCP 2015 and that an override changes only what it should.
+
 Independent Python checks of the expected answers are in `tools/`.
 
 ## Layout
@@ -122,10 +125,31 @@ List inputs (bar layers, bolt coordinates, weld segments) use the field type `li
 
 ## Add a code edition
 
-1. Copy `js/codes/nscp2015.js` to a new file and change the values and clause numbers.
-2. Register it in `js/codes/index.js` with `enabled: true`.
+An edition is a data file in `js/codes/`. Build a new one from an existing edition with
+`derive(base, overrides, meta)` from `js/codes/derive.js` (as `js/codes/nscp2025.js` does), register it in
+`js/codes/index.js`, and set `enabled: true` when its values are complete. No calculator file changes: the
+calculators read every factor, table and clause number from the edition (`node tools/audit-literals.mjs` lists the
+numbers left in calculator files).
 
-No calculator file changes.
+## Adding NSCP 2025
+
+`js/codes/nscp2025.js` is in place as a draft: it is NSCP 2015 with nothing changed, it is disabled, and it can be
+picked only by opening the site with `?edition-preview=1` (for example `index.html?edition-preview=1`). While it
+is selected, every calculator page and printed report shows "Draft edition. NSCP 2025 values have not been
+entered; results repeat NSCP 2015." When the NSCP 2025 text is available:
+
+1. Run `node tools/edition-checklist.mjs`. It writes `docs/NSCP2025_CHECKLIST.md`, one row per value and clause
+   of NSCP 2015 with an empty NSCP 2025 column. Fill that column from the code.
+2. Enter each changed value as an override in `nscp2025.js`, by path (`'concrete.phi.shear': 0.75`) or as nested
+   objects (`steel: { compression: { phi: 0.90 } }`). Arrays are replaced whole. A few entries are functions with
+   their numbers inside (for example `concrete.beta1`, `concrete.Ec`, `concrete.fr`): override the function if
+   those numbers change.
+3. Change clause numbers in `clauses`, per clause key: `'clauses.steel.comp.Fcr': { nscp: '505.3' }`.
+4. For a provision that is new in NSCP 2025, add a new key to both editions (NSCP 2015 gets `null` or its old
+   value) and read it in the calculator.
+5. Run `node tests/edition.mjs` (parity of the two editions and the override test; also part of
+   `node tests/run.mjs`), then the full test suite.
+6. Set `enabled: true` and `status: 'final'` in `nscp2025.js` and drop "draft" from its label.
 
 ## Matrix Analysis
 

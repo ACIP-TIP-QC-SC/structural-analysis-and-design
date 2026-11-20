@@ -1,0 +1,251 @@
+{
+ "module": "found/settlement",
+ "calc": "js/modules/found/settlement.calc.js",
+ "cases": [
+  {
+   "id": "ST-1",
+   "name": "Test: elastic settlement at the centre, Das Example 9.2",
+   "method": null,
+   "input": {
+    "mode": "elastic",
+    "B": 1,
+    "L": 2,
+    "q0": 150,
+    "H": 6,
+    "mu": 0.3,
+    "point": "center",
+    "If": 0.71,
+    "layers": [
+     {
+      "t": 2,
+      "Es": 10000
+     },
+     {
+      "t": 1,
+      "Es": 8000
+     },
+     {
+      "t": 2,
+      "Es": 12000
+     }
+    ]
+   },
+   "expect": {
+    "zbar": 5,
+    "Es": 10400,
+    "m": 2,
+    "n": 12,
+    "F1": 0.6609730446808989,
+    "F2": 0.026075341626802948,
+    "Is": 0.6758732398962148,
+    "Se": 12.596587508565703
+   },
+   "pass": null
+  },
+  {
+   "id": "ST-2",
+   "name": "Test: elastic settlement at the corner, If 1.0",
+   "method": null,
+   "input": {
+    "mode": "elastic",
+    "B": 1,
+    "L": 2,
+    "q0": 150,
+    "H": 6,
+    "mu": 0.3,
+    "point": "corner",
+    "If": 1,
+    "layers": [
+     {
+      "t": 2,
+      "Es": 10000
+     },
+     {
+      "t": 1,
+      "Es": 8000
+     },
+     {
+      "t": 2,
+      "Es": 12000
+     }
+    ]
+   },
+   "expect": {
+    "m": 2,
+    "n": 6,
+    "F1": 0.5627686177802249,
+    "F2": 0.04966681860782948,
+    "Is": 0.5911496569846989,
+    "Se": 7.758839247924173,
+    "SeCentre": 17.741672547275638,
+    "SeRigid": 16.499755468966345
+   },
+   "pass": null
+  },
+  {
+   "id": "ST-3",
+   "name": "Test: consolidation, normally consolidated clay, Das Example 9.14",
+   "method": null,
+   "input": {
+    "mode": "consolidation",
+    "B": 1,
+    "L": 2,
+    "Df": 1,
+    "q0": 150,
+    "stress": "boussinesq",
+    "gw": 2.5,
+    "layers": [
+     {
+      "t": 2.5,
+      "gamma": 16.5,
+      "gammaSat": 17.5
+     },
+     {
+      "t": 0.5,
+      "gamma": 16.5,
+      "gammaSat": 17.5
+     }
+    ],
+    "clay": {
+     "Hc": 2.5,
+     "gammaSat": 16,
+     "e0": 0.8,
+     "Cc": 0.32,
+     "Cs": 0.09,
+     "sigc": null
+    }
+   },
+   "expect": {
+    "sigO": 52.832499999999996,
+    "dsTop": 28.51963961744129,
+    "dsMid": 12.352180642652787,
+    "dsBot": 6.728819945625764,
+    "dsAv": 14.109530355613032,
+    "Sc": 45.68787497272247,
+    "clayCase": "NC"
+   },
+   "pass": null
+  },
+  {
+   "id": "ST-4",
+   "name": "Test: overconsolidated, σ'c between σ'o and σ'o + Δσ",
+   "method": null,
+   "input": {
+    "mode": "consolidation",
+    "B": 1,
+    "L": 2,
+    "Df": 1,
+    "q0": 150,
+    "stress": "boussinesq",
+    "gw": 2.5,
+    "layers": [
+     {
+      "t": 2.5,
+      "gamma": 16.5,
+      "gammaSat": 17.5
+     },
+     {
+      "t": 0.5,
+      "gamma": 16.5,
+      "gammaSat": 17.5
+     }
+    ],
+    "clay": {
+     "Hc": 2.5,
+     "gammaSat": 16,
+     "e0": 0.8,
+     "Cc": 0.32,
+     "Cs": 0.09,
+     "sigc": 60
+    }
+   },
+   "expect": {
+    "Sc": 28.03854109066993,
+    "clayCase": "OC2"
+   },
+   "pass": null
+  },
+  {
+   "id": "ST-5",
+   "name": "Test: overconsolidated, σ'o + Δσ below σ'c",
+   "method": null,
+   "input": {
+    "mode": "consolidation",
+    "B": 1,
+    "L": 2,
+    "Df": 1,
+    "q0": 150,
+    "stress": "boussinesq",
+    "gw": 2.5,
+    "layers": [
+     {
+      "t": 2.5,
+      "gamma": 16.5,
+      "gammaSat": 17.5
+     },
+     {
+      "t": 0.5,
+      "gamma": 16.5,
+      "gammaSat": 17.5
+     }
+    ],
+    "clay": {
+     "Hc": 2.5,
+     "gammaSat": 16,
+     "e0": 0.8,
+     "Cc": 0.32,
+     "Cs": 0.09,
+     "sigc": 80
+    }
+   },
+   "expect": {
+    "Sc": 12.84971483607819,
+    "clayCase": "OC1"
+   },
+   "pass": null
+  },
+  {
+   "id": "ST-6",
+   "name": "Test: consolidation with the 2:1 stress method",
+   "method": null,
+   "input": {
+    "mode": "consolidation",
+    "B": 1,
+    "L": 2,
+    "Df": 1,
+    "q0": 150,
+    "stress": "2to1",
+    "gw": 2.5,
+    "layers": [
+     {
+      "t": 2.5,
+      "gamma": 16.5,
+      "gammaSat": 17.5
+     },
+     {
+      "t": 0.5,
+      "gamma": 16.5,
+      "gammaSat": 17.5
+     }
+    ],
+    "clay": {
+     "Hc": 2.5,
+     "gammaSat": 16,
+     "e0": 0.8,
+     "Cc": 0.32,
+     "Cs": 0.09,
+     "sigc": null
+    }
+   },
+   "expect": {
+    "dsTop": 25,
+    "dsMid": 13.445378151260504,
+    "dsBot": 8.391608391608392,
+    "dsAv": 14.528853499441736,
+    "Sc": 46.89317475509554,
+    "clayCase": "NC"
+   },
+   "pass": null
+  }
+ ]
+}

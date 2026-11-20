@@ -53,6 +53,14 @@ export default {
     cantileverPoint: { k: 1 / 3, label: 'P L³ / (3 E I)', point: true }
   },
   tributary: { oneWayRatio: 2 },     // long/short >= 2 is one-way action
+  // Settlement (Das, Principles of Foundation Engineering, Ch. 8 and 9).
+  settlement: {
+    zbarB: 5,                        // Es averaged to a depth of min(5B, H) (Eq. 9.23)
+    rigid: 0.93,                     // rigid footing: about 0.93 x the flexible centre settlement
+    alpha: { center: 4, corner: 1 }, // Steinbrenner: alpha = 4 at the centre (B' = B/2), 1 at the corner (B' = B)
+    simpson: [1, 4, 1],              // average stress increase over the clay: (top + 4 mid + bottom) / 6
+    spread: 2                        // 2:1 method: the load spreads 1 horizontal per 2 vertical on each side
+  },
   // Piles (owner's foundation engineering textbook). pa = atmospheric pressure, kPa.
   pile: {
     pa: 100,
