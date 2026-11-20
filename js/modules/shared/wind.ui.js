@@ -141,7 +141,7 @@ function drawPressures(result, o) {
     // heights are dimensioned inside the outline, clear of the pressure labels outside it
     svg.add(dimV(X(D.L) - 12, Y(D.eave), Y(0), (D.h === D.eave ? 'h = eave = ' : 'eave ') + o.fq(D.eave, 'length_m')));
     if (D.h !== D.eave) svg.add(dimV(X(D.L * 0.5) - 12, Y(D.h), Y(0), 'h = ' + o.fq(D.h, 'length_m')));
-    if (gable) svg.add(text(X(D.L * 0.08), Y(D.eave) - 4, 'θ = ' + fmt(D.theta) + '°'));
+    if (gable) svg.add(text(X(D.L * 0.08), Y(D.eave) + 16, 'θ = ' + fmt(D.theta) + '°'));
   }
   svg.add(text(260, 18, (neg ? 'Internal pressure −GCpi' : 'Internal pressure +GCpi') + ' · qh = ' + P(D.qh, o), 'middle', 'cap'));
   // small plan B x L with the wind arrow

@@ -259,6 +259,66 @@
     "storeys.2.MT": 632.4726346249997
    },
    "pass": null
+  },
+  {
+   "id": "WN-7",
+   "name": "Test: minimum wind load, gable 15°, wind normal to the ridge",
+   "method": null,
+   "input": {
+    "mode": "storeys",
+    "V": 260,
+    "exposure": "C",
+    "Kd": 0.85,
+    "B": 30,
+    "L": 20,
+    "roof": "gable",
+    "theta": 15,
+    "direction": "normal",
+    "eave": 12,
+    "levels": [
+     4,
+     8,
+     12
+    ],
+    "enclosure": "enclosed",
+    "G": 0.85,
+    "kzMethod": "table"
+   },
+   "expect": {
+    "rise": 2.679491924311227,
+    "Fmin": 307.746207937148
+   },
+   "pass": null
+  },
+  {
+   "id": "WN-7b",
+   "name": "Test: minimum wind load, gable 15°, wind parallel to the ridge",
+   "method": null,
+   "input": {
+    "mode": "storeys",
+    "V": 260,
+    "exposure": "C",
+    "Kd": 0.85,
+    "B": 30,
+    "L": 20,
+    "roof": "gable",
+    "theta": 15,
+    "direction": "parallel",
+    "eave": 12,
+    "levels": [
+     4,
+     8,
+     12
+    ],
+    "enclosure": "enclosed",
+    "G": 0.85,
+    "kzMethod": "table"
+   },
+   "expect": {
+    "rise": 4.019237886466841,
+    "Fmin": 323.622197588692
+   },
+   "pass": null
   }
  ]
 }

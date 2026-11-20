@@ -84,7 +84,8 @@ function run(input, ctx) {
   if (z4) ({ Na, Nv } = nearSource(SE, I0.source, I0.dist));
   if (simplified && Na > SE.NaCapSimplified) { Na = SE.NaCapSimplified; out.notes.push('Simplified method: Na need not exceed ' + SE.NaCapSimplified + ' for structures without the listed irregularities (208.5.1.1).'); }
   const Ca = SE.Ca[zone][soil] * (z4 ? Na : 1), Cv = SE.Cv[zone][soil] * (z4 ? Nv : 1);
-  const I = SE.importance[I0.occupancy].I;
+  // The simplified method applies only to Occupancy IV and V (208.4.8.1), so I = 1.0 there.
+  const I = simplified ? SE.importance.IV.I : SE.importance[I0.occupancy].I;
   Object.assign(vals, { Z, Na, Nv, Ca, Cv, I });
   rec.add('Seismic zone', S`Zone ${zone}: Z = ${Z}`, null, null, 'seis.zone', SE.zone2Note);
   rec.add('Soil profile', S`Soil profile ${soil}${I0.soil === 'unknown' ? ' (soil properties not known)' : ''}`, null, null, I0.soil === 'unknown' ? 'seis.soilUnknown' : 'seis.soil',
@@ -132,7 +133,7 @@ function run(input, ctx) {
     rec.add('Lateral force at each level', S`Fx = (${SE.simplified.coef} Ca / R) wx`, null, S`F at the top level = ${u(vals.levels[vals.levels.length - 1].F, 'force')}`, 'seis.simplified');
     vals.Ft = 0;
     vals.Mot = vals.levels.reduce((t, r) => t + r.F * r.h, 0);
-    out.notes.push('Simplified method: storey drift is taken as ' + SE.simplified.drift + ' × the storey height unless computed (208.5.1.6). ρ and Ev still apply.');
+    out.notes.push('Simplified method: storey drift is taken as ' + SE.simplified.drift + ' × the storey height unless computed (208.5.1.6). ρ and Ev are included in E below (208.6.1).');
   } else {
     const ct = I0.ct, Ct = ct === 'walls' ? SE.CtWalls.coef / Math.sqrt(I0.Ac) : SE.Ct[ct];
     TA = Ct * Math.pow(hn, 3 / 4);
@@ -170,7 +171,7 @@ function run(input, ctx) {
 
   // ---------------------------------------------------------------- redundancy and load effects (208.6.1)
   let rho = 1, rhoRaw = null;
-  if (z4 && !simplified && I0.rmax > 0 && I0.AB > 0) {
+  if (z4 && I0.rmax > 0 && I0.AB > 0) {
     rhoRaw = SE.rho.a - SE.rho.b / (I0.rmax * Math.sqrt(I0.AB));
     rho = Math.min(Math.max(rhoRaw, SE.rho.min), SE.rho.max);
     const dual = /^Dual/.test(sys.system);
@@ -181,8 +182,8 @@ function run(input, ctx) {
     if (dual) rho = Math.max(SE.rho.min, SE.rho.dual * rho);
     rec.add('Redundancy factor', S`ρ = ${SE.rho.a} − ${SE.rho.b} / (rmax √AB), ${SE.rho.min} ≤ ρ ≤ ${SE.rho.max}`, S`ρ = ${SE.rho.a} − ${SE.rho.b} / (${I0.rmax} × √${v(I0.AB, 'area_m2')})`,
       S`ρ = ${rhoRaw}; used ρ = ${rho}`, 'seis.rho', dual ? 'Dual system: ' + SE.rho.dual + ' × the computed value, not less than ' + SE.rho.min + '.' : '');
-  } else rec.add('Redundancy factor', S`ρ = ${SE.rho.min}`, null, null, 'seis.rho', zone === 2 ? 'Zone 2: ρ = 1.0.' : simplified ? 'Simplified method: ρ is applied with the element design.' : 'rmax not given: ρ = 1.0.');
-  const D = isNum(I0.D) ? I0.D : 0, Eh = V, rhoEh = rho * Eh, Ev = simplified ? 0 : SE.Ev * Ca * I * D, E = rhoEh + Ev, Em = Omega0 * Eh;
+  } else rec.add('Redundancy factor', S`ρ = ${SE.rho.min}`, null, null, 'seis.rho', zone === 2 ? 'Zone 2: ρ = 1.0.' : 'rmax not given: ρ = 1.0.');
+  const D = isNum(I0.D) ? I0.D : 0, Eh = V, rhoEh = rho * Eh, Ev = SE.Ev * Ca * I * D, E = rhoEh + Ev, Em = Omega0 * Eh;
   Object.assign(vals, { Eh, rhoRaw, rho, rhoEh, Ev, E, Em });
   rec.add('Earthquake load effect', S`E = ρ Eh + Ev, Ev = ${SE.Ev} Ca I D`, S`E = ${rho} × ${v(Eh, 'force')} + ${SE.Ev} × ${Ca} × ${I} × ${v(D, 'force')}`, S`E = ${u(E, 'force')}`, 'seis.E', 'Ev = 0 for allowable stress design. Eh is taken as the base shear V.');
   if (!simplified) rec.add('Estimated maximum earthquake force', S`Em = Ω0 Eh`, S`Em = ${Omega0} × ${v(Eh, 'force')}`, S`Em = ${u(Em, 'force')}`, 'seis.Em');

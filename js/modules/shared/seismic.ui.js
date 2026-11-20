@@ -44,8 +44,11 @@ function fields(mode, method, val, ed) {
         { value: 'other', label: 'All other buildings (' + SE.Ct.other + ')' }, { value: 'walls', label: 'Concrete or masonry shear walls: Ct = ' + SE.CtWalls.coef + '/√Ac' }] });
     if (val.ct === 'walls') f.push({ key: 'Ac', label: 'combined effective area of the shear walls, Ac = Σ Ae[0.2 + (De/hn)²]', symbol: 'Ac', quantity: 'area_m2', step: 'System', default: 10 });
     f.push({ key: 'TB', label: 'period by Method B (optional)', symbol: 'TB', quantity: 'time_s', step: 'System', optional: true, hint: 'Capped at ' + SE.periodBCap[4] + ' TA in Zone 4 and ' + SE.periodBCap[2] + ' TA in Zone 2. Blank: Method A only.' },
-      { key: 'regular', label: 'Regular structure (208.4.8 procedure check)', type: 'check', step: 'System', default: true },
-      { key: 'rmax', label: 'largest element-storey shear ratio for ρ (optional)', symbol: 'rmax', quantity: 'ratio', step: 'System', optional: true, hint: 'Blank: ρ = 1.0.' },
+      { key: 'regular', label: 'Regular structure (208.4.8 procedure check)', type: 'check', step: 'System', default: true });
+  }
+  // Redundancy and the vertical component apply to every base-shear mode, including the simplified method (208.6.1).
+  if (mode !== 'drift') {
+    f.push({ key: 'rmax', label: 'largest element-storey shear ratio for ρ (optional)', symbol: 'rmax', quantity: 'ratio', step: 'System', optional: true, hint: 'Blank: ρ = 1.0.' },
       { key: 'AB', label: 'ground floor area for ρ', symbol: 'AB', quantity: 'area_m2', step: 'System', optional: true },
       { key: 'D', label: 'dead load effect for Ev = ' + SE.Ev + ' Ca I D (optional)', symbol: 'D', quantity: 'force', step: 'System', optional: true });
   }

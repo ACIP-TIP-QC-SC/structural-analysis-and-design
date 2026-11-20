@@ -216,7 +216,12 @@ function run(input, ctx) {
     return { z, trib, qz: r.qz, pw, pl, F, MT: W.cases.case2 * F * W.cases.ecc * B };
   });
   const Vbase = storeys.reduce((t, s) => t + s.F, 0), Mbase = storeys.reduce((t, s) => t + s.F * s.z, 0);
-  const Fmin = W.minimum.wall * B * h + W.minimum.roof * B * rise;
+  // 207B.4.7: 0.77 kPa on the wall area and 0.38 kPa on the roof area projected on a vertical plane normal
+  // to the wind. Wind normal to the ridge: walls B × eave, roof B × rise. Wind parallel to the ridge: the
+  // gable-end wall B × eave + B × rise/2 (its triangle), and the roof adds no projected area.
+  const parallel = gable && I.direction === 'parallel';
+  const wallArea = B * eave + (parallel ? B * rise / 2 : 0), roofArea = parallel ? 0 : B * rise;
+  const Fmin = W.minimum.wall * wallArea + W.minimum.roof * roofArea;
   vals.storeys = storeys.map((s) => ({ z: s.z, trib: s.trib, F: s.F, MT: s.MT }));
   Object.assign(vals, { Vbase, Mbase, Vcase2: W.cases.case2 * Vbase, Fmin });
   rec.add('Net wall pressure on the windward and leeward walls', S`pw = qz G ${CpWW}; pl = qh G Cp(leeward) = ${v(qh, 'pressure_lo')} × ${G} × ${CpLee}; internal pressures cancel`, null,
@@ -226,8 +231,8 @@ function run(input, ctx) {
   rec.add('Load Case 2', S`${W.cases.case2} of the forces with a torsion MT = ${W.cases.case2} F × ${W.cases.ecc} B at each level`, null,
     S`V (Case 2) = ${u(vals.Vcase2, 'force')}; MT at ${storeys[0].z} m = ${u(storeys[0].MT, 'moment')}`, 'wind.cases',
     'Cases 3 and 4 combine both directions at ' + W.cases.case2 + ' and ' + W.cases.case4 + ' of the forces; they are not computed here.');
-  rec.add('Minimum design wind load', S`Fmin = ${W.minimum.wall} B h + ${W.minimum.roof} (B × rise)`, S`Fmin = ${W.minimum.wall} × ${v(B, 'length_m')} × ${v(h, 'length_m')} + ${W.minimum.roof} × ${v(B, 'length_m')} × ${v(rise, 'length_m')}`,
-    S`Fmin = ${u(Fmin, 'force')}`, 'wind.minimum', 'Wall area times ' + W.minimum.wall + ' kPa plus the roof area projected on a vertical plane times ' + W.minimum.roof + ' kPa.');
+  rec.add('Minimum design wind load', S`Fmin = ${W.minimum.wall} × wall area + ${W.minimum.roof} × projected roof area`, S`Fmin = ${W.minimum.wall} × ${v(wallArea, 'area_m2')} + ${W.minimum.roof} × ${v(roofArea, 'area_m2')}`,
+    S`Fmin = ${u(Fmin, 'force')}`, 'wind.minimum', 'Wall area (' + (parallel ? 'gable-end wall, B × eave + B × rise/2' : 'B × eave') + ') times ' + W.minimum.wall + ' kPa plus the roof area projected on a vertical plane normal to the wind (' + (parallel ? 'none' : 'B × rise') + ') times ' + W.minimum.roof + ' kPa (207B.4.7).');
   out.checks = [check('Minimum wind load (207B.4.7)', ['Fmin', Fmin, 'force'], ['Vbase', Vbase, 'force'], Fmin / Vbase, 'wind.minimum')];
   // The minimum check is shown as a check row; like the other load modules there is no ADEQUATE verdict
   // (the presets expect none), and a failing minimum gives the warning below.

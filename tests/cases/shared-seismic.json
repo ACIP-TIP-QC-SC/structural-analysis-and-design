@@ -271,6 +271,41 @@
    "pass": null
   },
   {
+   "id": "SM-6b",
+   "name": "Test: simplified static with redundancy and Ev",
+   "method": null,
+   "input": {
+    "mode": "simplified",
+    "zone": 4,
+    "soil": "unknown",
+    "source": "C",
+    "dist": 20,
+    "levels": [
+     {
+      "h": 3,
+      "w": 1200
+     },
+     {
+      "h": 6,
+      "w": 1000
+     }
+    ],
+    "rmax": 0.6,
+    "AB": 400,
+    "D": 1000,
+    "system": "A-A1"
+   },
+   "expect": {
+    "V": 645.3333333333334,
+    "rhoRaw": 1.4916666666666667,
+    "rho": 1.4916666666666667,
+    "rhoEh": 962.6222222222223,
+    "Ev": 220,
+    "E": 1182.6222222222223
+   },
+   "pass": null
+  },
+  {
    "id": "SM-7",
    "name": "Test: storey drift, passes",
    "method": null,
