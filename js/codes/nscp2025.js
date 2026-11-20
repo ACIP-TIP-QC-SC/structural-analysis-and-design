@@ -21,9 +21,9 @@ export default derive(nscp2015, {
   // NSCP 2025 overrides go here. None entered: the 2025 text is not available yet.
 }, {
   id: 'nscp2025',
-  label: 'NSCP 2025 (draft: NSCP 2015 values)',
-  short: 'NSCP 2025 (draft)',
+  label: 'NSCP 2025 (TBE)',
+  short: 'NSCP 2025 (TBE)',
   status: 'draft',
   enabled: false,
-  banner: 'Draft edition. NSCP 2025 values have not been entered; results repeat NSCP 2015.'
+  banner: 'NSCP 2025 (TBE): values to be entered. Results repeat NSCP 2015.'
 });

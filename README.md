@@ -135,8 +135,8 @@ numbers left in calculator files).
 
 `js/codes/nscp2025.js` is in place as a draft: it is NSCP 2015 with nothing changed, it is disabled, and it can be
 picked only by opening the site with `?edition-preview=1` (for example `index.html?edition-preview=1`). While it
-is selected, every calculator page and printed report shows "Draft edition. NSCP 2025 values have not been
-entered; results repeat NSCP 2015." When the NSCP 2025 text is available:
+is selected, every calculator page and printed report shows "NSCP 2025 (TBE): values to be entered. Results
+repeat NSCP 2015." When the NSCP 2025 text is available:
 
 1. Run `node tools/edition-checklist.mjs`. It writes `docs/NSCP2025_CHECKLIST.md`, one row per value and clause
    of NSCP 2015 with an empty NSCP 2025 column. Fill that column from the code.
